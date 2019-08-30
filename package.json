@@ -1,0 +1,37 @@
+{
+  "name": "user-man",
+  "version": "1.0.01",
+  "description": "User managment pack",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src -d dist",
+    "watch": "babel src -d dist -w",
+    "lint": "eslint ./src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idlviv/user-man.git"
+  },
+  "keywords": [
+    "user",
+    "signin",
+    "signup"
+  ],
+  "author": "id",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/idlviv/user-man/issues"
+  },
+  "homepage": "https://github.com/idlviv/user-man#readme",
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "eslint": "^6.1.0",
+    "eslint-config-google": "^0.13.0"
+  }
+}
