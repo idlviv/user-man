@@ -25,7 +25,9 @@
   },
   "homepage": "https://github.com/idlviv/user-man#readme",
   "dependencies": {
-    "jsonwebtoken": "^8.5.1"
+    "jsonwebtoken": "^8.5.1",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.7"
   },
   "devDependencies": {
     "@babel/cli": "^7.5.5",
