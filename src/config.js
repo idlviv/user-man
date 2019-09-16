@@ -1,3 +1,5 @@
+const nodemailer = require('nodemailer');
+
 class Config {
   constructor() {
     // make singleton
@@ -21,6 +23,17 @@ class Config {
   init(options) {
     this.options = options;
   }
+
+  get emailTransporter() {
+    return nodemailer.createTransport({
+      service: 'Mailgun',
+      auth: {
+        user: this.get.emailUser,
+        pass: this.get.emailPassword,
+      },
+    });
+  }
+
 }
 
 export const config = new Config();

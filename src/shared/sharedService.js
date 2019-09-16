@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 import { config } from '../config';
+import { ServerError, DbError } from '../errors';
 
 export class SharedService {
   constructor() { }
@@ -18,12 +18,12 @@ export class SharedService {
   createJWT(prefix, sub, expire, secret) {
     const date = Math.floor(Date.now() / 1000); // in seconds
     return prefix + jwt.sign(
-        {
-          sub,
-          iat: date,
-          exp: date + expire,
-        },
-        secret
+      {
+        sub,
+        iat: date,
+        exp: date + expire,
+      },
+      secret
     );
   };
 
@@ -37,41 +37,37 @@ export class SharedService {
  */
   updateDocument(filter, update, options) {
     const { UserModel } = config.get;
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       UserModel.updateOne(filter, update, options)
-          .then(
-              (result) => {
-                if (result.ok !== 1) {
-                  reject(new DbError());
-                }
-                resolve(result);
-              },
-              (err) => reject(new DbError())
-          );
+        .then(
+          (result) => {
+            if (result.ok !== 1) {
+              reject(new DbError());
+            }
+            resolve(result);
+          },
+          (err) => reject(new DbError())
+        );
     });
   };
 
   /**
- * compare password from request (candidate)
- * with password from db
+ * Send mail
  *
- * @param {string} passwordCandidate
- * @param {string} passwordFromDb
- * @param {UserModel} userFromDb // added to pass user data on next step
- * @return {Promise<UserModel>}
+ * @param {Object} mailOptions
+ * @return {Promise}
  */
-  isPasswordMatched(passwordCandidate, passwordFromDb, userFromDb) {
-    console.log('');
+  sendMail(mailOptions) {
+    const transporter = config.emailTransporter;
     return new Promise((resolve, reject) => {
-      bcrypt.compare(passwordCandidate, passwordFromDb)
-          .then((passwordMatched) => {
-            if (passwordMatched) {
-              resolve(userFromDb);
-            } else {
-              reject(new ClientError({ message: 'Невірний пароль', status: 401, code: 'wrongCredentials' }));
-            }
-          })
-          .catch((err) => reject(err));
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          reject(new ServerError({
+            message: 'Помилка відправки email',
+          }));
+        }
+        resolve(info);
+      });
     });
-  }
+  };
 }

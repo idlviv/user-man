@@ -11,6 +11,8 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+var nodemailer = require('nodemailer');
+
 var Config =
 /*#__PURE__*/
 function () {
@@ -42,6 +44,17 @@ function () {
     key: "get",
     get: function get() {
       return this.options;
+    }
+  }, {
+    key: "emailTransporter",
+    get: function get() {
+      return nodemailer.createTransport({
+        service: 'Mailgun',
+        auth: {
+          user: this.get.emailUser,
+          pass: this.get.emailPassword
+        }
+      });
     }
   }]);
 

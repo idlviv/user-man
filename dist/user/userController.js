@@ -170,7 +170,7 @@ function () {
         Object.assign(user, req.user._doc);
         Object.assign(modificationRequest, req.body);
 
-        _this3.sharedService.isPasswordMatched(modificationRequest.password, user.password, user).then(function (user) {
+        _this3.userService.isPasswordMatched(modificationRequest.password, user.password, user).then(function (user) {
           if (modificationRequest.name === 'password') {
             return bcrypt.hash(modificationRequest.value, 10).then(function (hash) {
               return _this3.sharedService.updateDocument({
@@ -291,6 +291,145 @@ function () {
               return next(err);
             });
           });
+        });
+      };
+    }
+    /*
+      First step to reset password
+      Send reset code on email and write its hash in db
+     */
+
+  }, {
+    key: "passwordResetCheckEmail",
+    value: function passwordResetCheckEmail() {
+      var _this6 = this;
+
+      return function (req, res, next) {
+        var email = req.query.email;
+        var user;
+        var code;
+
+        _this6.userService.isEmailExists(email, 'local').then(function (userFromDb) {
+          code = Math.floor(Math.random() * 100000) + '';
+          user = userFromDb;
+          return bcrypt.hash(code, 10);
+        }).then(function (hash) {
+          return _this6.sharedService.updateDocument({
+            _id: user._doc._id
+          }, {
+            $set: {
+              code: hash,
+              codeTries: 1
+            }
+          });
+        }).then(function (result) {
+          var mailOptions = {
+            from: 'HandMADE <postmaster@hmade.work>',
+            to: email,
+            subject: 'Зміна пароля, код підтвердження',
+            text: 'Ваш код підтвердження: ' + code,
+            html: '<b>Ваш код підтвердження: </b>' + code
+          };
+          return _this6.sharedService.sendMail(mailOptions);
+        }).then(function (info) {
+          var sub = {
+            _id: user._id
+          }; // token to identify user
+
+          var codeToken = _this6.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretCode);
+
+          return res.status(200).json(codeToken);
+        })["catch"](function (err) {
+          return next(err);
+        });
+      };
+    }
+    /*
+      Second step to reset password
+      Compare code from email with one in db
+    */
+
+  }, {
+    key: "passwordResetCheckCode",
+    value: function passwordResetCheckCode() {
+      var _this7 = this;
+
+      var UserModel = _config.config.get.UserModel;
+      return function (req, res, next) {
+        var code = req.query.code;
+        var user;
+        console.log(' req.query.code', req.query.code);
+        console.log(' req.user._doc._id', req.user._doc._id);
+        UserModel.findOne({
+          _id: req.user._doc._id
+        }).then(function (userFromDb) {
+          user = userFromDb;
+
+          if (!userFromDb) {
+            throw new _errors.ClientError({
+              status: 401,
+              code: 'noSuchuser'
+            });
+          }
+
+          if (userFromDb.isCodeLocked) {
+            throw new _errors.ClientError({
+              message: 'Кількість спроб вичерпано',
+              status: 403,
+              code: 'maxTries'
+            });
+          } // if code doesn't match then throw error with code 'wrongCredentials' here
+
+
+          return _this7.userService.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
+        }).then(function (userFromDb) {
+          var sub = {
+            _id: userFromDb._doc._id
+          }; // token to identify user
+
+          var changePasswordToken = _this7.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretChangePassword);
+
+          return res.status(200).json(changePasswordToken);
+        })["catch"](function (err) {
+          if (err.code === 'wrongCredentials') {
+            _this7.userService.updatePasswordResetOptions(user).then(function () {
+              return next(err);
+            });
+          } else {
+            next(err);
+          }
+        });
+      };
+    }
+    /*
+      Third step to reset password
+      Middleware which invokes 'next()' to login this user
+    
+    */
+
+  }, {
+    key: "passwordReset",
+    value: function passwordReset() {
+      var _this8 = this;
+
+      return function (req, res, next) {
+        var user = {};
+        Object.assign(user, req.user._doc);
+        var password = req.query.password;
+        bcrypt.hash(password, 10).then(function (hash) {
+          return _this8.sharedService.updateDocument({
+            _id: user._id
+          }, {
+            $set: {
+              password: hash,
+              code: null
+            }
+          });
+        }).then(function (result) {
+          req.body.login = user.login;
+          next();
+        })["catch"](function (err) {
+          return next(err);
         });
       };
     }

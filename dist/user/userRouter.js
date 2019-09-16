@@ -64,7 +64,36 @@ function () {
 
       this.router.put('/user/edit', this.sharedMiddleware.authentication(), this.userController.userEdit());
       this.router.put('/user/editUnsecure', this.sharedMiddleware.authentication(), this.sharedMiddleware.authorization('user'), this.userController.userEditUnsecure());
-      this.router.put('/user/edit-avatar', this.sharedMiddleware.authentication(), this.userController.editAvatar(this.cloudinary));
+      this.router.put('/user/edit-avatar', this.sharedMiddleware.authentication(), this.userController.editAvatar(this.cloudinary)); // first step to reset password
+
+      this.router.get('/user/password-reset-check-email', // logout if user already logged in
+      this.userController.logout(), this.userController.setFrontendAuthCookie(), this.sharedMiddleware.recaptcha(), this.userController.passwordResetCheckEmail()); // second step to reset password
+
+      this.router.get('/user/password-reset-check-code', // function (req, res, next) {
+      //   // call passport authentication passing the "local" strategy name and a callback function
+      //   passport.authenticate('jwt.passwordResetCheckCode', function (error, user, info) {
+      //     // this will execute in any case, even if a passport strategy will find an error
+      //     // log everything to console
+      //     console.log('error', error);
+      //     console.log('user', user);
+      //     console.log('info', info);
+      //     if (error) {
+      //       res.status(401).send(error);
+      //     } else if (!user) {
+      //       res.status(401).send(info);
+      //     } else {
+      //       next();
+      //     }
+      //     res.status(401).send(info);
+      //   })(req, res);
+      // },
+      this.passport.authenticate('jwt.passwordResetCheckCode', {
+        session: false
+      }), this.userController.passwordResetCheckCode()); // third step to reset password
+
+      this.router.get('/user/password-reset', this.passport.authenticate('jwt.passwordReset', {
+        session: false
+      }), this.userController.passwordReset(), this.passport.authenticate('localWithoutPassword'), this.userController.login());
       return this.router;
     }
   }]);

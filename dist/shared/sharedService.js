@@ -7,6 +7,8 @@ exports.SharedService = void 0;
 
 var _config = require("../config");
 
+var _errors = require("../errors");
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -14,8 +16,6 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 var jwt = require('jsonwebtoken');
-
-var bcrypt = require('bcryptjs');
 
 var SharedService =
 /*#__PURE__*/
@@ -62,42 +62,35 @@ function () {
       return new Promise(function (resolve, reject) {
         UserModel.updateOne(filter, update, options).then(function (result) {
           if (result.ok !== 1) {
-            reject(new DbError());
+            reject(new _errors.DbError());
           }
 
           resolve(result);
         }, function (err) {
-          return reject(new DbError());
+          return reject(new _errors.DbError());
         });
       });
     }
   }, {
-    key: "isPasswordMatched",
+    key: "sendMail",
 
     /**
-    * compare password from request (candidate)
-    * with password from db
+    * Send mail
     *
-    * @param {string} passwordCandidate
-    * @param {string} passwordFromDb
-    * @param {UserModel} userFromDb // added to pass user data on next step
-    * @return {Promise<UserModel>}
+    * @param {Object} mailOptions
+    * @return {Promise}
     */
-    value: function isPasswordMatched(passwordCandidate, passwordFromDb, userFromDb) {
-      console.log('');
+    value: function sendMail(mailOptions) {
+      var transporter = _config.config.emailTransporter;
       return new Promise(function (resolve, reject) {
-        bcrypt.compare(passwordCandidate, passwordFromDb).then(function (passwordMatched) {
-          if (passwordMatched) {
-            resolve(userFromDb);
-          } else {
-            reject(new ClientError({
-              message: 'Невірний пароль',
-              status: 401,
-              code: 'wrongCredentials'
+        transporter.sendMail(mailOptions, function (err, info) {
+          if (err) {
+            reject(new _errors.ServerError({
+              message: 'Помилка відправки email'
             }));
           }
-        })["catch"](function (err) {
-          return reject(err);
+
+          resolve(info);
         });
       });
     }
