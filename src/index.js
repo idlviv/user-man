@@ -1,10 +1,8 @@
-import { config, Config } from './config';
-
-import * as helpers from './helpers';
+import { config } from './config';
+import * as shared from './shared';
 import * as errors from './errors';
-import * as middlewares from './middlewares';
-import * as userModule from './user';
+import * as user from './user';
 
-export { helpers, errors, middlewares, config, Config, userModule };
+export { shared, errors, config, user };
 
 

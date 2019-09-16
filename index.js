@@ -1,18 +1,15 @@
-const { cryptHelper } = require('./dist').helpers;
-const { auth, recaptcha, cookie } = require('./dist').middlewares;
-const { ClientError, ServerError } = require('./dist').errors;
-const { userController } = require('./dist').userModule;
+const { sharedService, sharedMiddleware } = require('./dist').shared;
+const { ClientError, ServerError, DbError } = require('./dist').errors;
+const { userController, UserRouter } = require('./dist').user;
 const config = require('./dist/config').config;
-const Config = require('./dist/config').Config;
 
 module.exports = {
   config,
-  Config,
-  cryptHelper,
-  cookie,
-  auth,
-  recaptcha,
+  sharedService,
+  sharedMiddleware,
   ClientError,
   ServerError,
+  DbError,
   userController,
+  UserRouter,
 };

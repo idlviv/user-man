@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.config = exports.Config = void 0;
+exports.config = void 0;
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -17,12 +17,14 @@ function () {
   function Config() {
     _classCallCheck(this, Config);
 
+    // make singleton
     if (Config.exists) {
       return Config.instance;
     }
 
     Config.instance = this;
-    Config.exists = true;
+    Config.exists = true; // initialization
+
     this.options = {};
   }
 
@@ -46,6 +48,5 @@ function () {
   return Config;
 }();
 
-exports.Config = Config;
 var config = new Config();
 exports.config = config;
