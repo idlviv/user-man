@@ -21,18 +21,18 @@ export class UserService {
     const { UserModel } = config.get;
     return new Promise((resolve, reject) => {
       UserModel.find({ email, provider })
-        .then((result) => {
-          if (!result.length) {
-            resolve();
-          } else {
-            reject(new ClientError({
-              message: 'Цей email вже використовується',
-              status: 422,
-              code: 'uniqueConflict',
-            }));
-          }
-        })
-        .catch((err) => reject(new DbError()));
+          .then((result) => {
+            if (!result.length) {
+              resolve();
+            } else {
+              reject(new ClientError({
+                message: 'Цей email вже використовується',
+                status: 422,
+                code: 'uniqueConflict',
+              }));
+            }
+          })
+          .catch((err) => reject(new DbError()));
     });
   }
 
@@ -47,18 +47,18 @@ export class UserService {
     const { UserModel } = config.get;
     return new Promise((resolve, reject) => {
       UserModel.find({ login })
-        .then((result) => {
-          if (!result.length) {
-            resolve();
-          } else {
-            reject(new ClientError({
-              message: 'Цей логін вже використовується',
-              status: 422,
-              code: 'uniqueConflict',
-            }));
-          }
-        })
-        .catch((err) => reject(new DbError()));
+          .then((result) => {
+            if (!result.length) {
+              resolve();
+            } else {
+              reject(new ClientError({
+                message: 'Цей логін вже використовується',
+                status: 422,
+                code: 'uniqueConflict',
+              }));
+            }
+          })
+          .catch((err) => reject(new DbError()));
     });
   }
 
@@ -73,14 +73,14 @@ export class UserService {
     const { UserModel } = config.get;
     return new Promise((resolve, reject) => {
       UserModel.findOne({ email, provider })
-        .then((user) => {
-          if (user) {
-            resolve(user);
-          } else {
-            reject(new ClientError({ message: 'Email не знайдено', status: 403, code: 'wrongCredentials' }));
-          }
-        })
-        .catch((err) => reject(new DbError()));
+          .then((user) => {
+            if (user) {
+              resolve(user);
+            } else {
+              reject(new ClientError({ message: 'Email не знайдено', status: 403, code: 'wrongCredentials' }));
+            }
+          })
+          .catch((err) => reject(new DbError()));
     });
   }
 
@@ -94,14 +94,14 @@ export class UserService {
     const { UserModel } = config.get;
     return new Promise((resolve, reject) => {
       UserModel.findOne({ login })
-        .then((user) => {
-          if (user) {
-            resolve(user);
-          } else {
-            reject(new ClientError({ message: 'Користувача не знайдено', status: 401 }));
-          }
-        })
-        .catch((err) => reject(new DbError()));
+          .then((user) => {
+            if (user) {
+              resolve(user);
+            } else {
+              reject(new ClientError({ message: 'Користувача не знайдено', status: 401 }));
+            }
+          })
+          .catch((err) => reject(new DbError()));
     });
   }
 
@@ -117,14 +117,14 @@ export class UserService {
   isPasswordMatched(passwordCandidate, passwordFromDb, userFromDb) {
     return new Promise((resolve, reject) => {
       bcrypt.compare(passwordCandidate, passwordFromDb)
-        .then((passwordMatched) => {
-          if (passwordMatched) {
-            resolve(userFromDb);
-          } else {
-            reject(new ClientError({ message: 'Невірний пароль', status: 401, code: 'wrongCredentials' }));
-          }
-        })
-        .catch((err) => reject(err));
+          .then((passwordMatched) => {
+            if (passwordMatched) {
+              resolve(userFromDb);
+            } else {
+              reject(new ClientError({ message: 'Невірний пароль', status: 401, code: 'wrongCredentials' }));
+            }
+          })
+          .catch((err) => reject(err));
     });
   }
 
@@ -137,15 +137,14 @@ export class UserService {
   updatePasswordResetOptions(user) {
     return new Promise((resolve, reject) => {
       this.sharedService.updateDocument(
-        { _id: user._doc._id },
-        { $inc: { 'codeTries': 1 } },
-        { upsert: true }
+          { _id: user._doc._id },
+          { $inc: { 'codeTries': 1 } },
+          { upsert: true }
       )
-        .then((result) => resolve(result))
-        .catch((err) => reject(new DbError()));
+          .then((result) => resolve(result))
+          .catch((err) => reject(new DbError()));
     });
   }
-
 }
 
 export const userService = new UserService();

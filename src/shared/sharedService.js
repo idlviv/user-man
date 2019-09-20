@@ -3,7 +3,7 @@ import { config } from '../config';
 import { ServerError, DbError } from '../errors';
 
 export class SharedService {
-  constructor() { }
+  constructor() {}
 
   /**
    * Create JWT token
@@ -17,29 +17,31 @@ export class SharedService {
    */
   createJWT(prefix, sub, expire, secret) {
     const date = Math.floor(Date.now() / 1000); // in seconds
-    return prefix + jwt.sign(
-      {
-        sub,
-        iat: date,
-        exp: date + expire,
-      },
-      secret
+    return (
+      prefix +
+      jwt.sign(
+          {
+            sub,
+            iat: date,
+            exp: date + expire,
+          },
+          secret
+      )
     );
-  };
+  }
 
   /**
- * Wrapper for Mongo updateOne
- *
- * @param {*} filter
- * @param {*} update
- * @param {*} options
- * @return {Promise<object>}
- */
+   * Wrapper for Mongo updateOne
+   *
+   * @param {*} filter
+   * @param {*} update
+   * @param {*} options
+   * @return {Promise<object>}
+   */
   updateDocument(filter, update, options) {
     const { UserModel } = config.get;
-    return new Promise(function (resolve, reject) {
-      UserModel.updateOne(filter, update, options)
-        .then(
+    return new Promise(function(resolve, reject) {
+      UserModel.updateOne(filter, update, options).then(
           (result) => {
             if (result.ok !== 1) {
               reject(new DbError());
@@ -47,27 +49,29 @@ export class SharedService {
             resolve(result);
           },
           (err) => reject(new DbError())
-        );
+      );
     });
-  };
+  }
 
   /**
- * Send mail
- *
- * @param {Object} mailOptions
- * @return {Promise}
- */
+   * Send mail
+   *
+   * @param {Object} mailOptions
+   * @return {Promise}
+   */
   sendMail(mailOptions) {
     const transporter = config.emailTransporter;
     return new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {
-          reject(new ServerError({
-            message: 'Помилка відправки email',
-          }));
+          reject(
+              new ServerError({
+                message: 'Помилка відправки email',
+              })
+          );
         }
         resolve(info);
       });
     });
-  };
+  }
 }

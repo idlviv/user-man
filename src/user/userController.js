@@ -22,20 +22,20 @@ export class UserController {
       const user = Object.assign({}, req.body);
       user.provider = 'local';
       this.userService.isEmailUnique(user.email, user.provider)
-        .then(() => this.userService.isLoginUnique(user.login))
-        .then(() => bcrypt.hash(req.body.password, 10))
-        .then((hash) => {
-          user.password = hash;
-          user.role = 'guest';
-          user.createdAt = Date.now();
-          user.commentsReadedTill = Date.now();
-          const userModel = new UserModel(user);
-          // create new user
-          return userModel.save();
-        })
-        // next to login created user
-        .then(() => next())
-        .catch((err) => next(err));
+          .then(() => this.userService.isLoginUnique(user.login))
+          .then(() => bcrypt.hash(req.body.password, 10))
+          .then((hash) => {
+            user.password = hash;
+            user.role = 'guest';
+            user.createdAt = Date.now();
+            user.commentsReadedTill = Date.now();
+            const userModel = new UserModel(user);
+            // create new user
+            return userModel.save();
+          })
+      // next to login created user
+          .then(() => next())
+          .catch((err) => next(err));
     };
   };
 
@@ -87,6 +87,7 @@ export class UserController {
     const { JWTSecret, cookieName } = config.get;
     return (req, res, next) => {
       let token;
+      console.log('req.isAuthenticated()', req.isAuthenticated());
       if (req.isAuthenticated()) {
         const user = {
           _id: req.user._doc._id,
@@ -103,14 +104,14 @@ export class UserController {
         token = this.sharedService.createJWT('', null, null, JWTSecret);
       }
       res.cookie(
-        cookieName,
-        token,
-        {
+          cookieName,
+          token,
+          {
           // 'secure': false,
-          httpOnly: false,
-          // maxAge: null,
-          sameSite: 'Strict',
-        }
+            httpOnly: false,
+            // maxAge: null,
+            sameSite: 'Strict',
+          }
       );
       next();
     };
@@ -125,31 +126,31 @@ export class UserController {
       Object.assign(modificationRequest, req.body);
 
       this.userService.isPasswordMatched(modificationRequest.password, user.password, user)
-        .then((user) => {
-          if (modificationRequest.name === 'password') {
-            return bcrypt.hash(modificationRequest.value, 10)
-              .then((hash) => this.sharedService.updateDocument(
-                { _id: user._id },
-                {
-                  $set: {
-                    password: hash,
-                    code: null,
-                  },
-                }
-              ));
-          } else {
-            return this.sharedService.updateDocument(
-              { _id: user._id },
-              {
-                $set: {
-                  [modificationRequest.name]: modificationRequest.value,
-                },
-              }
-            );
-          }
-        })
-        .then(() => res.status(200).json('Зміни внесено'))
-        .catch((err) => next(err));
+          .then((user) => {
+            if (modificationRequest.name === 'password') {
+              return bcrypt.hash(modificationRequest.value, 10)
+                  .then((hash) => this.sharedService.updateDocument(
+                      { _id: user._id },
+                      {
+                        $set: {
+                          password: hash,
+                          code: null,
+                        },
+                      }
+                  ));
+            } else {
+              return this.sharedService.updateDocument(
+                  { _id: user._id },
+                  {
+                    $set: {
+                      [modificationRequest.name]: modificationRequest.value,
+                    },
+                  }
+              );
+            }
+          })
+          .then(() => res.status(200).json('Зміни внесено'))
+          .catch((err) => next(err));
     };
   }
 
@@ -172,14 +173,14 @@ export class UserController {
 
       if (modificationRequest.name === 'commentsReadedTill') {
         this.sharedService.updateDocument(
-          { _id: user._id },
-          {
-            $set: {
-              [modificationRequest.name]: date,
-            },
-          })
-          .then((result) => res.status(200).json('Зміни внесено'))
-          .catch((err) => next(err));
+            { _id: user._id },
+            {
+              $set: {
+                [modificationRequest.name]: date,
+              },
+            })
+            .then((result) => res.status(200).json('Зміни внесено'))
+            .catch((err) => next(err));
       } else {
         return next(new ClientError({ message: 'Помилка авторизації', status: 401 }));
       }
@@ -191,7 +192,7 @@ export class UserController {
     return (req, res, next) => {
       const form = new Formidable.IncomingForm({ maxFileSize: 8400000 });
       const that = this;
-      form.parse(req, function (err, fields, files) {
+      form.parse(req, function(err, fields, files) {
         if (err) {
           return next(new ServerError({ message: 'Помилка завантаження аватара - form parse', status: 400 }));
         }
@@ -199,36 +200,35 @@ export class UserController {
         const user = {};
         Object.assign(user, req.user._doc);
         cloudinary.v2.uploader.upload(
-          files.file.path,
-          {
-            public_id: 'avatar_' + user._id, // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
-            eager: [
-              { width: 180, height: 180, crop: 'fill', fetch_format: 'auto' },
-              { width: 50, height: 50, crop: 'fill', fetch_format: 'auto' },
-            ],
-          },
-          (err, result) => {
-            if (err) {
-              return next(
-                new ServerError({ message: 'Помилка завантаження аватара - cloudinary', status: err.http_code })
-              );
-            }
-            that.sharedService.updateDocument(
-              { _id: new ObjectId(user._id) },
-              {
-                $set: {
-                  avatar: result.public_id,
-                },
+            files.file.path,
+            {
+              public_id: 'avatar_' + user._id, // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
+              eager: [
+                { width: 180, height: 180, crop: 'fill', fetch_format: 'auto' },
+                { width: 50, height: 50, crop: 'fill', fetch_format: 'auto' },
+              ],
+            },
+            (err, result) => {
+              if (err) {
+                return next(
+                    new ServerError({ message: 'Помилка завантаження аватара - cloudinary', status: err.http_code })
+                );
               }
-            )
-              .then(
-                (result) => {
-                  console.log('result change avatar', result);
-                  return res.status(200).json('Зміни внесено');
-                },
-                (err) => next(err)
-              );
-          });
+              that.sharedService.updateDocument(
+                  { _id: new ObjectId(user._id) },
+                  {
+                    $set: {
+                      avatar: result.public_id,
+                    },
+                  }
+              )
+                  .then(
+                      (result) => {
+                        return res.status(200).json('Зміни внесено');
+                      },
+                      (err) => next(err)
+                  );
+            });
       });
     };
   }
@@ -244,29 +244,29 @@ export class UserController {
       let user;
       let code;
       this.userService.isEmailExists(email, 'local')
-        .then((userFromDb) => {
-          code = Math.floor(Math.random() * (100000)) + '';
-          user = userFromDb;
-          return bcrypt.hash(code, 10);
-        })
-        .then((hash) => this.sharedService.updateDocument({ _id: user._doc._id }, { $set: { code: hash, codeTries: 1 } }))
-        .then((result) => {
-          const mailOptions = {
-            from: 'HandMADE <postmaster@hmade.work>',
-            to: email,
-            subject: 'Зміна пароля, код підтвердження',
-            text: 'Ваш код підтвердження: ' + code,
-            html: '<b>Ваш код підтвердження: </b>' + code,
-          };
-          return this.sharedService.sendMail(mailOptions);
-        })
-        .then((info) => {
-          const sub = { _id: user._id };
-          // token to identify user
-          const codeToken = this.sharedService.createJWT('JWT ', sub, 300, config.get.JWTSecretCode);
-          return res.status(200).json(codeToken);
-        })
-        .catch((err) => next(err));
+          .then((userFromDb) => {
+            code = Math.floor(Math.random() * (100000)) + '';
+            user = userFromDb;
+            return bcrypt.hash(code, 10);
+          })
+          .then((hash) => this.sharedService.updateDocument({ _id: user._doc._id }, { $set: { code: hash, codeTries: 1 } }))
+          .then((result) => {
+            const mailOptions = {
+              from: 'HandMADE <postmaster@hmade.work>',
+              to: email,
+              subject: 'Зміна пароля, код підтвердження',
+              text: 'Ваш код підтвердження: ' + code,
+              html: '<b>Ваш код підтвердження: </b>' + code,
+            };
+            return this.sharedService.sendMail(mailOptions);
+          })
+          .then((info) => {
+            const sub = { _id: user._id };
+            // token to identify user
+            const codeToken = this.sharedService.createJWT('JWT ', sub, 300, config.get.JWTSecretCode);
+            return res.status(200).json(codeToken);
+          })
+          .catch((err) => next(err));
     };
   }
 
@@ -279,43 +279,38 @@ export class UserController {
     return (req, res, next) => {
       const code = req.query.code;
       let user;
-      console.log(' req.query.code', req.query.code);
-      console.log(' req.user._doc._id', req.user._doc._id);
-
       UserModel.findOne({ _id: req.user._doc._id })
-        .then((userFromDb) => {
-          user = userFromDb;
-          if (!userFromDb) {
-            throw new ClientError({ status: 401, code: 'noSuchuser' });
-          }
-          if (userFromDb.isCodeLocked) {
-            throw new ClientError({ message: 'Кількість спроб вичерпано', status: 403, code: 'maxTries' });
-          }
-          // if code doesn't match then throw error with code 'wrongCredentials' here
-          return this.userService.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
-        })
-        .then((userFromDb) => {
-          const sub = { _id: userFromDb._doc._id };
-          // token to identify user
-          const changePasswordToken = this.sharedService.createJWT('JWT ', sub, 300, config.get.JWTSecretChangePassword);
-          return res.status(200).json(changePasswordToken);
-        })
-        .catch((err) => {
-          if (err.code === 'wrongCredentials') {
-            this.userService.updatePasswordResetOptions(user)
-              .then(() => next(err));
-          } else {
-            next(err);
-          }
-        });
+          .then((userFromDb) => {
+            user = userFromDb;
+            if (!userFromDb) {
+              throw new ClientError({ status: 401, code: 'noSuchuser' });
+            }
+            if (userFromDb.isCodeLocked) {
+              throw new ClientError({ message: 'Кількість спроб вичерпано', status: 403, code: 'maxTries' });
+            }
+            // if code doesn't match then throw error with code 'wrongCredentials' here
+            return this.userService.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
+          })
+          .then((userFromDb) => {
+            const sub = { _id: userFromDb._doc._id };
+            // token to identify user
+            const changePasswordToken = this.sharedService.createJWT('JWT ', sub, 300, config.get.JWTSecretChangePassword);
+            return res.status(200).json(changePasswordToken);
+          })
+          .catch((err) => {
+            if (err.code === 'wrongCredentials') {
+              this.userService.updatePasswordResetOptions(user)
+                  .then(() => next(err));
+            } else {
+              next(err);
+            }
+          });
     };
-
   }
 
   /*
     Third step to reset password
     Middleware which invokes 'next()' to login this user
-  
   */
   passwordReset() {
     return (req, res, next) => {
@@ -323,20 +318,20 @@ export class UserController {
       Object.assign(user, req.user._doc);
       const password = req.query.password;
       bcrypt.hash(password, 10)
-        .then((hash) => this.sharedService.updateDocument(
-          { _id: user._id },
-          {
-            $set: {
-              password: hash,
-              code: null,
-            }
-          }
-        ))
-        .then((result) => {
-          req.body.login = user.login;
-          next();
-        })
-        .catch((err) => next(err));
+          .then((hash) => this.sharedService.updateDocument(
+              { _id: user._id },
+              {
+                $set: {
+                  password: hash,
+                  code: null,
+                },
+              }
+          ))
+          .then((result) => {
+            req.body.login = user.login;
+            next();
+          })
+          .catch((err) => next(err));
     };
   }
 }

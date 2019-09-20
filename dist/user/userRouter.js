@@ -93,7 +93,9 @@ function () {
 
       this.router.get('/user/password-reset', this.passport.authenticate('jwt.passwordReset', {
         session: false
-      }), this.userController.passwordReset(), this.passport.authenticate('localWithoutPassword'), this.userController.login());
+      }), this.userController.passwordReset(), this.passport.authenticate('localWithoutPassword', {
+        session: true
+      }), this.userController.setFrontendAuthCookie(), this.userController.login());
       return this.router;
     }
   }]);

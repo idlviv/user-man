@@ -133,6 +133,7 @@ function () {
           cookieName = _config$get.cookieName;
       return function (req, res, next) {
         var token;
+        console.log('req.isAuthenticated()', req.isAuthenticated());
 
         if (req.isAuthenticated()) {
           var user = {
@@ -285,7 +286,6 @@ function () {
                 avatar: result.public_id
               }
             }).then(function (result) {
-              console.log('result change avatar', result);
               return res.status(200).json('Зміни внесено');
             }, function (err) {
               return next(err);
@@ -358,8 +358,6 @@ function () {
       return function (req, res, next) {
         var code = req.query.code;
         var user;
-        console.log(' req.query.code', req.query.code);
-        console.log(' req.user._doc._id', req.user._doc._id);
         UserModel.findOne({
           _id: req.user._doc._id
         }).then(function (userFromDb) {
@@ -404,7 +402,6 @@ function () {
     /*
       Third step to reset password
       Middleware which invokes 'next()' to login this user
-    
     */
 
   }, {

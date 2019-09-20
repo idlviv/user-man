@@ -46,17 +46,17 @@ function () {
         exp: date + expire
       }, secret);
     }
+    /**
+     * Wrapper for Mongo updateOne
+     *
+     * @param {*} filter
+     * @param {*} update
+     * @param {*} options
+     * @return {Promise<object>}
+     */
+
   }, {
     key: "updateDocument",
-
-    /**
-    * Wrapper for Mongo updateOne
-    *
-    * @param {*} filter
-    * @param {*} update
-    * @param {*} options
-    * @return {Promise<object>}
-    */
     value: function updateDocument(filter, update, options) {
       var UserModel = _config.config.get.UserModel;
       return new Promise(function (resolve, reject) {
@@ -71,15 +71,15 @@ function () {
         });
       });
     }
+    /**
+     * Send mail
+     *
+     * @param {Object} mailOptions
+     * @return {Promise}
+     */
+
   }, {
     key: "sendMail",
-
-    /**
-    * Send mail
-    *
-    * @param {Object} mailOptions
-    * @return {Promise}
-    */
     value: function sendMail(mailOptions) {
       var transporter = _config.config.emailTransporter;
       return new Promise(function (resolve, reject) {
