@@ -133,7 +133,6 @@ function () {
           cookieName = _config$get.cookieName;
       return function (req, res, next) {
         var token;
-        console.log('req.isAuthenticated()', req.isAuthenticated());
 
         if (req.isAuthenticated()) {
           var user = {

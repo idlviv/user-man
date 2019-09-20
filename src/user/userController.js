@@ -87,7 +87,6 @@ export class UserController {
     const { JWTSecret, cookieName } = config.get;
     return (req, res, next) => {
       let token;
-      console.log('req.isAuthenticated()', req.isAuthenticated());
       if (req.isAuthenticated()) {
         const user = {
           _id: req.user._doc._id,
