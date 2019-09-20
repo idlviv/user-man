@@ -9,6 +9,8 @@ var _ = require("./");
 
 var _shared = require("../shared");
 
+var _config = require("../config");
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -24,11 +26,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var UserRouter =
 /*#__PURE__*/
 function () {
-  function UserRouter(router, passport, cloudinary) {
+  function UserRouter(router, cloudinary) {
     _classCallCheck(this, UserRouter);
 
     this.router = router;
-    this.passport = passport;
     this.cloudinary = cloudinary;
     this.userController = _.userController;
     this.sharedMiddleware = _shared.sharedMiddleware;
@@ -37,12 +38,34 @@ function () {
   _createClass(UserRouter, [{
     key: "routes",
     value: function routes() {
-      this.router.get('/user/login', this.passport.authenticate('local'), this.userController.setFrontendAuthCookie(), this.userController.login());
+      this.router.get('/user/login', //         function (req, res, next) {
+      //           console.log('config.passport', config.passport);
+      //   // call passport authentication passing the "local" strategy name and a callback function
+      //   passport.authenticate('local', function (error, user, info) {
+      //     // this will execute in any case, even if a passport strategy will find an error
+      //     // log everything to console
+      //     console.log('error', error);
+      //     console.log('user', user);
+      //     console.log('info', info);
+      //     if (error) {
+      //       res.status(401).send(error);
+      //     } else if (!user) {
+      //       res.status(401).send(info);
+      //     } else {
+      //       next();
+      //     }
+      //     res.status(401).send(info);
+      //   })(req, res);
+      // },
+      _config.config.passport.authenticate('local'), function (req, res, next) {
+        console.log('111');
+        next();
+      }, this.userController.setFrontendAuthCookie(), this.userController.login());
       this.router.get('/user/logout', this.userController.logout(), this.userController.setFrontendAuthCookie(), this.userController.logoutResponse());
-      this.router.post('/user/create', this.sharedMiddleware.recaptcha(), this.userController.create(), this.passport.authenticate('localWithoutPassword'), this.userController.setFrontendAuthCookie(), this.userController.login()); // 1step: on google authenticate buntton press
+      this.router.post('/user/create', this.sharedMiddleware.recaptcha(), this.userController.create(), _config.config.passport.authenticate('localWithoutPassword'), this.userController.setFrontendAuthCookie(), this.userController.login()); // 1step: on google authenticate buntton press
 
       this.router.get('/user/auth/google', // 2step: passport redirects to google 'chose account' window
-      this.passport.authenticate('google', {
+      _config.config.passport.authenticate('google', {
         scope: ['profile', 'email'],
         accessType: 'offline'
       }, {
@@ -52,7 +75,7 @@ function () {
 
       this.router.get('/user/auth/google/redirect', // 4.step: passport get code from google, extracts 'scope' info
       // and passed it to the callback function (./config/passport)
-      this.passport.authenticate('google', {
+      _config.config.passport.authenticate('google', {
         session: true
       }), // 5.step: set user cookie (for frontend manipulations)
       this.userController.setFrontendAuthCookie(), // 6.step: redirect to frontend
@@ -69,31 +92,13 @@ function () {
       this.router.get('/user/password-reset-check-email', // logout if user already logged in
       this.userController.logout(), this.userController.setFrontendAuthCookie(), this.sharedMiddleware.recaptcha(), this.userController.passwordResetCheckEmail()); // second step to reset password
 
-      this.router.get('/user/password-reset-check-code', // function (req, res, next) {
-      //   // call passport authentication passing the "local" strategy name and a callback function
-      //   passport.authenticate('jwt.passwordResetCheckCode', function (error, user, info) {
-      //     // this will execute in any case, even if a passport strategy will find an error
-      //     // log everything to console
-      //     console.log('error', error);
-      //     console.log('user', user);
-      //     console.log('info', info);
-      //     if (error) {
-      //       res.status(401).send(error);
-      //     } else if (!user) {
-      //       res.status(401).send(info);
-      //     } else {
-      //       next();
-      //     }
-      //     res.status(401).send(info);
-      //   })(req, res);
-      // },
-      this.passport.authenticate('jwt.passwordResetCheckCode', {
+      this.router.get('/user/password-reset-check-code', _config.config.passport.authenticate('jwt.passwordResetCheckCode', {
         session: false
       }), this.userController.passwordResetCheckCode()); // third step to reset password
 
-      this.router.get('/user/password-reset', this.passport.authenticate('jwt.passwordReset', {
+      this.router.get('/user/password-reset', _config.config.passport.authenticate('jwt.passwordReset', {
         session: false
-      }), this.userController.passwordReset(), this.passport.authenticate('localWithoutPassword', {
+      }), this.userController.passwordReset(), _config.config.passport.authenticate('localWithoutPassword', {
         session: true
       }), this.userController.setFrontendAuthCookie(), this.userController.login());
       return this.router;

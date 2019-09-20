@@ -207,6 +207,79 @@ function () {
         });
       });
     }
+    /**
+    * check locking after max tries to input wrong password
+    *
+    * @param {UserModel} userFromDb
+    * @return {Promise<UserModel>}
+    */
+
+  }, {
+    key: "isPasswordLocked",
+    value: function isPasswordLocked(userFromDb) {
+      return new Promise(function (resolve, reject) {
+        if (userFromDb.isPasswordLocked) {
+          var estimatedTime = userFromDb.passwordLockUntil - Date.now();
+          reject(new _errors.ClientError({
+            message: "\u0412\u0445\u0456\u0434 \u0437\u0430\u0431\u043B\u043E\u043A\u043E\u0432\u0430\u043D\u043E, \u0441\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \n        ".concat(Math.round(estimatedTime / 1000 / 60), " \u0445\u0432\u0438\u043B\u0438\u043D."),
+            status: 403
+          }));
+        } else {
+          resolve(userFromDb);
+        }
+      });
+    }
+    /**
+    * update user (password lock options) after wrong password input
+    *
+    * @param {UserModel} user
+    * @return {Promise<object>}
+    */
+
+  }, {
+    key: "updatePasswordLockOptions",
+    value: function updatePasswordLockOptions(user) {
+      var _this2 = this;
+
+      return new Promise(function (resolve, reject) {
+        var dateNow = Date.now(); // in seconds
+
+        var query;
+
+        if (dateNow - user.passwordLockUntil > 600000) {
+          query = {
+            $set: {
+              passwordTries: 1,
+              passwordLockUntil: dateNow
+            }
+          };
+        } else if (user.passwordTries >= user.passwordLockTries) {
+          query = {
+            $set: {
+              passwordTries: 1,
+              passwordLockUntil: dateNow + 600000
+            }
+          };
+        } else {
+          query = {
+            $inc: {
+              passwordTries: 1
+            },
+            $set: {
+              passwordLockUntil: dateNow
+            }
+          };
+        }
+
+        _this2.sharedService.updateDocument({
+          _id: user._id
+        }, query).then(function (result) {
+          return resolve(result);
+        })["catch"](function (err) {
+          return reject(new _errors.DbError());
+        });
+      });
+    }
   }]);
 
   return UserService;

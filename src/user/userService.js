@@ -145,6 +145,64 @@ export class UserService {
           .catch((err) => reject(new DbError()));
     });
   }
+
+  /**
+ * check locking after max tries to input wrong password
+ *
+ * @param {UserModel} userFromDb
+ * @return {Promise<UserModel>}
+ */
+  isPasswordLocked(userFromDb) {
+    return new Promise((resolve, reject) => {
+      if (userFromDb.isPasswordLocked) {
+        const estimatedTime = userFromDb.passwordLockUntil - Date.now();
+        reject(new ClientError({
+          message: `Вхід заблоковано, спробуйте через 
+        ${Math.round(estimatedTime / 1000 / 60)} хвилин.`,
+          status: 403,
+        }));
+      } else {
+        resolve(userFromDb);
+      }
+    });
+  }
+
+  /**
+ * update user (password lock options) after wrong password input
+ *
+ * @param {UserModel} user
+ * @return {Promise<object>}
+ */
+  updatePasswordLockOptions(user) {
+    return new Promise((resolve, reject) => {
+      const dateNow = Date.now(); // in seconds
+      let query;
+
+      if ((dateNow - user.passwordLockUntil) > 600000) {
+        query = {
+          $set: {
+            passwordTries: 1,
+            passwordLockUntil: dateNow,
+          },
+        };
+      } else if (user.passwordTries >= user.passwordLockTries) {
+        query = {
+          $set: {
+            passwordTries: 1,
+            passwordLockUntil: dateNow + 600000,
+          },
+        };
+      } else {
+        query = {
+          $inc: { passwordTries: 1 },
+          $set: { passwordLockUntil: dateNow },
+        };
+      }
+      this.sharedService.updateDocument({ _id: user._id }, query)
+          .then((result) => resolve(result))
+          .catch((err) => reject(new DbError()));
+    });
+  }
 }
 
 export const userService = new UserService();

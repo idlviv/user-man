@@ -2,7 +2,7 @@
 // const { router } = config.get;
 import { userController } from './';
 import { sharedMiddleware } from '../shared';
-
+import { config } from '../config';
 // router.get('/user/logout',
 //     userController.logout(),
 //     userController.setFrontendAuthCookie(),
@@ -12,9 +12,8 @@ import { sharedMiddleware } from '../shared';
 // export const userRouter = router;
 
 export class UserRouter {
-  constructor(router, passport, cloudinary) {
+  constructor(router, cloudinary) {
     this.router = router;
-    this.passport = passport;
     this.cloudinary = cloudinary;
     this.userController = userController;
     this.sharedMiddleware = sharedMiddleware;
@@ -22,7 +21,32 @@ export class UserRouter {
 
   routes() {
     this.router.get('/user/login',
-        this.passport.authenticate('local'),
+        //         function (req, res, next) {
+        //           console.log('config.passport', config.passport);
+        //   // call passport authentication passing the "local" strategy name and a callback function
+        //   passport.authenticate('local', function (error, user, info) {
+        //     // this will execute in any case, even if a passport strategy will find an error
+        //     // log everything to console
+        //     console.log('error', error);
+        //     console.log('user', user);
+        //     console.log('info', info);
+
+        //     if (error) {
+        //       res.status(401).send(error);
+        //     } else if (!user) {
+        //       res.status(401).send(info);
+        //     } else {
+        //       next();
+        //     }
+
+        //     res.status(401).send(info);
+        //   })(req, res);
+        // },
+        config.passport.authenticate('local'),
+        function(req,res,next) {
+          console.log('111');
+next();
+        },
         this.userController.setFrontendAuthCookie(),
         this.userController.login()
     );
@@ -36,7 +60,7 @@ export class UserRouter {
     this.router.post('/user/create',
         this.sharedMiddleware.recaptcha(),
         this.userController.create(),
-        this.passport.authenticate('localWithoutPassword'),
+        config.passport.authenticate('localWithoutPassword'),
         this.userController.setFrontendAuthCookie(),
         this.userController.login()
     );
@@ -44,7 +68,7 @@ export class UserRouter {
     // 1step: on google authenticate buntton press
     this.router.get('/user/auth/google',
         // 2step: passport redirects to google 'chose account' window
-        this.passport.authenticate(
+        config.passport.authenticate(
             'google',
             {
               scope: ['profile', 'email'],
@@ -59,7 +83,7 @@ export class UserRouter {
 
         // 4.step: passport get code from google, extracts 'scope' info
         // and passed it to the callback function (./config/passport)
-        this.passport.authenticate('google', { session: true }),
+        config.passport.authenticate('google', { session: true }),
 
         // 5.step: set user cookie (for frontend manipulations)
         this.userController.setFrontendAuthCookie(),
@@ -108,35 +132,16 @@ export class UserRouter {
 
     // second step to reset password
     this.router.get('/user/password-reset-check-code',
-        // function (req, res, next) {
-        //   // call passport authentication passing the "local" strategy name and a callback function
-        //   passport.authenticate('jwt.passwordResetCheckCode', function (error, user, info) {
-        //     // this will execute in any case, even if a passport strategy will find an error
-        //     // log everything to console
-        //     console.log('error', error);
-        //     console.log('user', user);
-        //     console.log('info', info);
 
-        //     if (error) {
-        //       res.status(401).send(error);
-        //     } else if (!user) {
-        //       res.status(401).send(info);
-        //     } else {
-        //       next();
-        //     }
-
-        //     res.status(401).send(info);
-        //   })(req, res);
-        // },
-        this.passport.authenticate('jwt.passwordResetCheckCode', { session: false }),
+        config.passport.authenticate('jwt.passwordResetCheckCode', { session: false }),
         this.userController.passwordResetCheckCode()
     );
 
     // third step to reset password
     this.router.get('/user/password-reset',
-        this.passport.authenticate('jwt.passwordReset', { session: false }),
+        config.passport.authenticate('jwt.passwordReset', { session: false }),
         this.userController.passwordReset(),
-        this.passport.authenticate('localWithoutPassword', { session: true }),
+        config.passport.authenticate('localWithoutPassword', { session: true }),
         this.userController.setFrontendAuthCookie(),
         this.userController.login()
     );
