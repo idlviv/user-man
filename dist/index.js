@@ -9,7 +9,7 @@ Object.defineProperty(exports, "config", {
     return _config.config;
   }
 });
-exports.user = exports.errors = exports.shared = void 0;
+exports.libs = exports.user = exports.errors = exports.shared = void 0;
 
 var _config = require("./config");
 
@@ -24,6 +24,10 @@ exports.errors = errors;
 var user = _interopRequireWildcard(require("./user"));
 
 exports.user = user;
+
+var libs = _interopRequireWildcard(require("./libs"));
+
+exports.libs = libs;
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 

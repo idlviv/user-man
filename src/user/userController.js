@@ -5,6 +5,7 @@ import { ClientError, ServerError } from '../errors';
 import { config } from '../config';
 import { sharedService } from '../shared';
 import { userService } from './userService';
+import { libs } from '../libs';
 
 export class UserController {
   constructor() {
@@ -186,8 +187,9 @@ export class UserController {
     };
   }
 
-  editAvatar(cloudinary) {
+  editAvatar() {
     const { ObjectId } = config.get;
+    const cloudinary = libs.cloudinary;
     return (req, res, next) => {
       const form = new Formidable.IncomingForm({ maxFileSize: 8400000 });
       const that = this;
@@ -213,6 +215,7 @@ export class UserController {
                     new ServerError({ message: 'Помилка завантаження аватара - cloudinary', status: err.http_code })
                 );
               }
+              console.log('result', result);
               that.sharedService.updateDocument(
                   { _id: new ObjectId(user._id) },
                   {

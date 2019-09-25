@@ -9,6 +9,8 @@ var _config = require("../config");
 
 var _errors = require("../errors");
 
+var _libs = require("../libs");
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -81,7 +83,8 @@ function () {
   }, {
     key: "sendMail",
     value: function sendMail(mailOptions) {
-      var transporter = _config.config.emailTransporter;
+      var transporter = _libs.libs.emailTransporter;
+      console.log('transporter', transporter);
       return new Promise(function (resolve, reject) {
         transporter.sendMail(mailOptions, function (err, info) {
           if (err) {

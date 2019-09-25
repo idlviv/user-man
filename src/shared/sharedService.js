@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 import { config } from '../config';
 import { ServerError, DbError } from '../errors';
+import { libs } from '../libs';
 
 export class SharedService {
   constructor() {}
@@ -60,7 +61,8 @@ export class SharedService {
    * @return {Promise}
    */
   sendMail(mailOptions) {
-    const transporter = config.emailTransporter;
+    const transporter = libs.emailTransporter;
+    console.log('transporter', transporter);
     return new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {

@@ -13,6 +13,8 @@ var _shared = require("../shared");
 
 var _userService = require("./userService");
 
+var _libs = require("../libs");
+
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -237,10 +239,11 @@ function () {
     }
   }, {
     key: "editAvatar",
-    value: function editAvatar(cloudinary) {
+    value: function editAvatar() {
       var _this5 = this;
 
       var ObjectId = _config.config.get.ObjectId;
+      var cloudinary = _libs.libs.cloudinary;
       return function (req, res, next) {
         var form = new Formidable.IncomingForm({
           maxFileSize: 8400000
@@ -278,6 +281,7 @@ function () {
               }));
             }
 
+            console.log('result', result);
             that.sharedService.updateDocument({
               _id: new ObjectId(user._id)
             }, {
