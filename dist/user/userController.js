@@ -281,7 +281,6 @@ function () {
               }));
             }
 
-            console.log('result', result);
             that.sharedService.updateDocument({
               _id: new ObjectId(user._id)
             }, {
@@ -297,27 +296,100 @@ function () {
         });
       };
     }
+  }, {
+    key: "emailVerificationSend",
+    value: function emailVerificationSend() {
+      var _this6 = this;
+
+      return function (req, res, next) {
+        var user = Object.assign({}, req.user._doc);
+        var sub = {
+          _id: user._id,
+          email: user.email
+        };
+        var expire = 60 * 60;
+        var secret = _config.config.get.JWTEmail;
+
+        var token = _this6.sharedService.createJWT('', sub, expire, secret);
+
+        var url = req.protocol + '://' + req.get('host') + '/api/user/email-verification?token=' + token;
+        var mailOptions = _config.config.mailOptionsEmailVerification;
+        mailOptions.email = user.email;
+        mailOptions.text = mailOptions.text + url;
+        mailOptions.html = mailOptions.html + url;
+        mailOptions.to = email;
+
+        _this6.sharedService.sendMail(mailOptions).then(function () {
+          return res.status(200).json('На Вашу пошту відправлено листа');
+        })["catch"](function (err) {
+          return next(err);
+        });
+      };
+    }
+  }, {
+    key: "emailVerificationReceive",
+    value: function emailVerificationReceive() {
+      var UserModel = _config.config.get.UserModel;
+      return function (req, res, next) {
+        var user = Object.assign({}, req.user._doc);
+        UserModel.findOne({
+          _id: user._id
+        }).then(function (result) {
+          if (!result._id) {
+            res.redirect(req.protocol + '://' + req.get('host'));
+          } else if (result.email !== user.email) {
+            res.redirect(req.protocol + '://' + req.get('host'));
+          } else {
+            UserModel.updateOne({
+              _id: user._id
+            }, {
+              $set: {
+                'role': 'user'
+              }
+            }).then(function (result) {
+              if (result.ok !== 1) {
+                res.redirect(req.protocol + '://' + req.get('host'));
+              }
+
+              return next(); // update token with changes (local login)
+              // const sub = {
+              //   _id: req.user._doc._id,
+              //   login: req.user._doc.login,
+              //   name: req.user._doc.name,
+              //   surname: req.user._doc.surname,
+              //   avatar: req.user._doc.avatar,
+              //   provider: req.user._doc.provider,
+              //   role: 'user',
+              // };
+              // const token = sharedHelper.createJWT('', sub, 60, 'JWT_SECRET');
+              // res.redirect(req.protocol + '://' + req.get('host') + '/user/redirection-with-token/' + token);
+            }, function (err) {
+              res.redirect(req.protocol + '://' + req.get('host'));
+            });
+          }
+        });
+      };
+    }
+  }, {
+    key: "passwordResetCheckEmail",
+
     /*
       First step to reset password
       Send reset code on email and write its hash in db
      */
-
-  }, {
-    key: "passwordResetCheckEmail",
     value: function passwordResetCheckEmail() {
-      var _this6 = this;
+      var _this7 = this;
 
       return function (req, res, next) {
-        var email = req.query.email;
         var user;
         var code;
 
-        _this6.userService.isEmailExists(email, 'local').then(function (userFromDb) {
+        _this7.userService.isEmailExists(email, 'local').then(function (userFromDb) {
           code = Math.floor(Math.random() * 100000) + '';
           user = userFromDb;
           return bcrypt.hash(code, 10);
         }).then(function (hash) {
-          return _this6.sharedService.updateDocument({
+          return _this7.sharedService.updateDocument({
             _id: user._doc._id
           }, {
             $set: {
@@ -326,20 +398,17 @@ function () {
             }
           });
         }).then(function (result) {
-          var mailOptions = {
-            from: 'HandMADE <postmaster@hmade.work>',
-            to: email,
-            subject: 'Зміна пароля, код підтвердження',
-            text: 'Ваш код підтвердження: ' + code,
-            html: '<b>Ваш код підтвердження: </b>' + code
-          };
-          return _this6.sharedService.sendMail(mailOptions);
+          var mailOptions = _config.config.mailOptionsEmailVerification;
+          mailOptions.to = req.query.email;
+          mailOptions.text = mailOptions.text + code;
+          mailOptions.html = mailOptions.html + code;
+          return _this7.sharedService.sendMail(mailOptions);
         }).then(function (info) {
           var sub = {
             _id: user._id
           }; // token to identify user
 
-          var codeToken = _this6.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretCode);
+          var codeToken = _this7.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretCode);
 
           return res.status(200).json(codeToken);
         })["catch"](function (err) {
@@ -355,7 +424,7 @@ function () {
   }, {
     key: "passwordResetCheckCode",
     value: function passwordResetCheckCode() {
-      var _this7 = this;
+      var _this8 = this;
 
       var UserModel = _config.config.get.UserModel;
       return function (req, res, next) {
@@ -382,18 +451,18 @@ function () {
           } // if code doesn't match then throw error with code 'wrongCredentials' here
 
 
-          return _this7.userService.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
+          return _this8.userService.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
         }).then(function (userFromDb) {
           var sub = {
             _id: userFromDb._doc._id
           }; // token to identify user
 
-          var changePasswordToken = _this7.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretChangePassword);
+          var changePasswordToken = _this8.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretChangePassword);
 
           return res.status(200).json(changePasswordToken);
         })["catch"](function (err) {
           if (err.code === 'wrongCredentials') {
-            _this7.userService.updatePasswordResetOptions(user).then(function () {
+            _this8.userService.updatePasswordResetOptions(user).then(function () {
               return next(err);
             });
           } else {
@@ -410,14 +479,14 @@ function () {
   }, {
     key: "passwordReset",
     value: function passwordReset() {
-      var _this8 = this;
+      var _this9 = this;
 
       return function (req, res, next) {
         var user = {};
         Object.assign(user, req.user._doc);
         var password = req.query.password;
         bcrypt.hash(password, 10).then(function (hash) {
-          return _this8.sharedService.updateDocument({
+          return _this9.sharedService.updateDocument({
             _id: user._id
           }, {
             $set: {

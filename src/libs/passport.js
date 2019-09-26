@@ -40,20 +40,16 @@ export class Passport {
           userService.isLoginExists(userCandidate.login)
               .then((userFromDb) => {
                 user = userFromDb;
-                console.log('userFromDb 0', userFromDb);
                 return userService.isPasswordLocked(userFromDb);
               })
           // if password doesn't match then throw error with code 'wrongCredentials' here
               .then((userFromDb) => {
-                console.log('userFromDb 0', userFromDb);
                 return userService.isPasswordMatched(userCandidate.password, userFromDb._doc.password, userFromDb);
               }
               )
               .then((userFromDb) => {
-                console.log('userFromDb', userFromDb);
                 return done(null, userFromDb);
               })
-
               .catch((err) => {
                 if (err.code === 'wrongCredentials') {
                   userService.updatePasswordLockOptions(user)
@@ -79,7 +75,7 @@ export class Passport {
               .catch((err) => done(err, false));
         }
     ));
-    // console.log('config.get.googleClientID', config.get.googleClientID);
+
     // google sign in strategy
     this.passport.use(
         new GoogleStrategy(
@@ -160,20 +156,30 @@ export class Passport {
     emailVerificationOptions.jwtFromRequest = ExtractJwt.fromUrlQueryParameter('token');
     emailVerificationOptions.secretOrKey = config.get.JWTEmail;
 
+    // pass req object to callback as first argument
+    emailVerificationOptions.passReqToCallback = true;
+
     this.passport.use('jwt.email.verification',
-        new JwtStrategy(emailVerificationOptions, (jwtPayload, done) => {
-          UserModel.findOne({ _id: jwtPayload.sub._id })
-              .then((user) => {
-                if (user) {
-                  done(null, user);
-                } else {
-                  done(null, false);
-                }
-              })
-              .catch((err) => {
-                done(err, false);
-              });
-        }
+        new JwtStrategy(emailVerificationOptions,
+            (req, jwtPayload, done) => {
+
+              // check that user which logged in is the same that user who veryfing email
+              if (req.user._doc._id.toString() === jwtPayload.sub._id.toString()) {
+                UserModel.findOne({ _id: jwtPayload.sub._id })
+                    .then((user) => {
+                      if (user) {
+                        done(null, user);
+                      } else {
+                        done(null, false);
+                      }
+                    })
+                    .catch((err) => {
+                      done(err, false);
+                    });
+              } else {
+                done(null, false);
+              }
+            }
         ));
 
     const jwtOptionsPasswordResetCheckCode = {};

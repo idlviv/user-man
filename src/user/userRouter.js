@@ -97,6 +97,27 @@ export class UserRouter {
         this.userController.editAvatar()
     );
 
+    this.router.get('/user/email-verification-send',
+        this.sharedMiddleware.authentication(),
+        this.userController.emailVerificationSend()
+    );
+
+    this.router.get('/user/email-verification',
+        this.sharedMiddleware.authentication(),
+        function(req, res, next) {
+          next();
+        },
+        this.passport.authenticate('jwt.email.verification', { session: false }),
+        function(req, res, next) {
+          next();
+        },
+        this.userController.emailVerificationReceive(),
+        // this.userController.setFrontendAuthCookie(),
+        function(req, res, next) {
+          res.redirect(req.protocol + '://' + req.get('host') + '/user/profile/');
+        },
+    );
+
 
     // first step to reset password
     this.router.get('/user/password-reset-check-email',

@@ -84,7 +84,6 @@ function () {
     key: "sendMail",
     value: function sendMail(mailOptions) {
       var transporter = _libs.libs.emailTransporter;
-      console.log('transporter', transporter);
       return new Promise(function (resolve, reject) {
         transporter.sendMail(mailOptions, function (err, info) {
           if (err) {

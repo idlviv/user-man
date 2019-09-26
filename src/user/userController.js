@@ -215,7 +215,6 @@ export class UserController {
                     new ServerError({ message: 'Помилка завантаження аватара - cloudinary', status: err.http_code })
                 );
               }
-              console.log('result', result);
               that.sharedService.updateDocument(
                   { _id: new ObjectId(user._id) },
                   {
@@ -235,6 +234,77 @@ export class UserController {
     };
   }
 
+  emailVerificationSend() {
+    return (req, res, next) => {
+      const user = Object.assign({}, req.user._doc);
+      const sub = {
+        _id: user._id,
+        email: user.email,
+      };
+
+      const expire = 60 * 60;
+      const secret = config.get.JWTEmail;
+      const token = this.sharedService.createJWT('', sub, expire, secret);
+
+      const url = req.protocol + '://' + req.get('host') +
+        '/api/user/email-verification?token=' + token;
+
+      const mailOptions = config.mailOptionsEmailVerification;
+      mailOptions.email = user.email;
+      mailOptions.text = mailOptions.text + url;
+      mailOptions.html = mailOptions.html + url;
+      mailOptions.to = email;
+
+      this.sharedService.sendMail(mailOptions)
+          .then(() => res.status(200).json('На Вашу пошту відправлено листа'))
+          .catch((err) => next(err));
+    };
+  };
+
+  emailVerificationReceive() {
+    const { UserModel } = config.get;
+
+    return (req, res, next) => {
+      const user = Object.assign({}, req.user._doc);
+
+      UserModel.findOne({ _id: user._id })
+          .then((result) => {
+            if (!result._id) {
+              res.redirect(req.protocol + '://' + req.get('host'));
+            } else if (result.email !== user.email) {
+              res.redirect(req.protocol + '://' + req.get('host'));
+            } else {
+              UserModel.updateOne({ _id: user._id },
+                  { $set: { 'role': 'user' } })
+                  .then(
+                      (result) => {
+                        if (result.ok !== 1) {
+                          res.redirect(req.protocol + '://' + req.get('host'));
+                        }
+                        return next();
+                        // update token with changes (local login)
+                        // const sub = {
+                        //   _id: req.user._doc._id,
+                        //   login: req.user._doc.login,
+                        //   name: req.user._doc.name,
+                        //   surname: req.user._doc.surname,
+                        //   avatar: req.user._doc.avatar,
+                        //   provider: req.user._doc.provider,
+                        //   role: 'user',
+                        // };
+                        // const token = sharedHelper.createJWT('', sub, 60, 'JWT_SECRET');
+                        // res.redirect(req.protocol + '://' + req.get('host') + '/user/redirection-with-token/' + token);
+                      },
+                      (err) => {
+                        res.redirect(req.protocol + '://' + req.get('host'));
+                      }
+                  );
+            }
+          }
+          );
+    };
+  };
+
 
   /*
     First step to reset password
@@ -242,7 +312,6 @@ export class UserController {
    */
   passwordResetCheckEmail() {
     return (req, res, next) => {
-      const email = req.query.email;
       let user;
       let code;
       this.userService.isEmailExists(email, 'local')
@@ -253,13 +322,10 @@ export class UserController {
           })
           .then((hash) => this.sharedService.updateDocument({ _id: user._doc._id }, { $set: { code: hash, codeTries: 1 } }))
           .then((result) => {
-            const mailOptions = {
-              from: 'HandMADE <postmaster@hmade.work>',
-              to: email,
-              subject: 'Зміна пароля, код підтвердження',
-              text: 'Ваш код підтвердження: ' + code,
-              html: '<b>Ваш код підтвердження: </b>' + code,
-            };
+            const mailOptions = config.mailOptionsEmailVerification;
+            mailOptions.to = req.query.email;
+            mailOptions.text = mailOptions.text + code;
+            mailOptions.html = mailOptions.html + code;
             return this.sharedService.sendMail(mailOptions);
           })
           .then((info) => {

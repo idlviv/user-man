@@ -61,14 +61,11 @@ function () {
 
         _userService.userService.isLoginExists(userCandidate.login).then(function (userFromDb) {
           user = userFromDb;
-          console.log('userFromDb 0', userFromDb);
           return _userService.userService.isPasswordLocked(userFromDb);
         }) // if password doesn't match then throw error with code 'wrongCredentials' here
         .then(function (userFromDb) {
-          console.log('userFromDb 0', userFromDb);
           return _userService.userService.isPasswordMatched(userCandidate.password, userFromDb._doc.password, userFromDb);
         }).then(function (userFromDb) {
-          console.log('userFromDb', userFromDb);
           return done(null, userFromDb);
         })["catch"](function (err) {
           if (err.code === 'wrongCredentials') {
@@ -90,8 +87,7 @@ function () {
         })["catch"](function (err) {
           return done(err, false);
         });
-      })); // console.log('config.get.googleClientID', config.get.googleClientID);
-      // google sign in strategy
+      })); // google sign in strategy
 
       this.passport.use(new GoogleStrategy({
         clientID: _config2.config.get.googleClientID,
@@ -163,19 +159,26 @@ function () {
       }));
       var emailVerificationOptions = {};
       emailVerificationOptions.jwtFromRequest = ExtractJwt.fromUrlQueryParameter('token');
-      emailVerificationOptions.secretOrKey = _config2.config.get.JWTEmail;
-      this.passport.use('jwt.email.verification', new JwtStrategy(emailVerificationOptions, function (jwtPayload, done) {
-        UserModel.findOne({
-          _id: jwtPayload.sub._id
-        }).then(function (user) {
-          if (user) {
-            done(null, user);
-          } else {
-            done(null, false);
-          }
-        })["catch"](function (err) {
-          done(err, false);
-        });
+      emailVerificationOptions.secretOrKey = _config2.config.get.JWTEmail; // pass req object to callback as first argument
+
+      emailVerificationOptions.passReqToCallback = true;
+      this.passport.use('jwt.email.verification', new JwtStrategy(emailVerificationOptions, function (req, jwtPayload, done) {
+        // check that user which logged in is the same that user who veryfing email
+        if (req.user._doc._id.toString() === jwtPayload.sub._id.toString()) {
+          UserModel.findOne({
+            _id: jwtPayload.sub._id
+          }).then(function (user) {
+            if (user) {
+              done(null, user);
+            } else {
+              done(null, false);
+            }
+          })["catch"](function (err) {
+            done(err, false);
+          });
+        } else {
+          done(null, false);
+        }
       }));
       var jwtOptionsPasswordResetCheckCode = {};
       jwtOptionsPasswordResetCheckCode.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');

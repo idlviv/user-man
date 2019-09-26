@@ -68,7 +68,18 @@ function () {
 
       this.router.put('/user/edit', this.sharedMiddleware.authentication(), this.userController.userEdit());
       this.router.put('/user/editUnsecure', this.sharedMiddleware.authentication(), this.sharedMiddleware.authorization('user'), this.userController.userEditUnsecure());
-      this.router.put('/user/edit-avatar', this.sharedMiddleware.authentication(), this.userController.editAvatar()); // first step to reset password
+      this.router.put('/user/edit-avatar', this.sharedMiddleware.authentication(), this.userController.editAvatar());
+      this.router.get('/user/email-verification-send', this.sharedMiddleware.authentication(), this.userController.emailVerificationSend());
+      this.router.get('/user/email-verification', this.sharedMiddleware.authentication(), function (req, res, next) {
+        next();
+      }, this.passport.authenticate('jwt.email.verification', {
+        session: false
+      }), function (req, res, next) {
+        next();
+      }, this.userController.emailVerificationReceive(), // this.userController.setFrontendAuthCookie(),
+      function (req, res, next) {
+        res.redirect(req.protocol + '://' + req.get('host') + '/user/profile/');
+      }); // first step to reset password
 
       this.router.get('/user/password-reset-check-email', // logout if user already logged in
       this.userController.logout(), this.userController.setFrontendAuthCookie(), this.sharedMiddleware.recaptcha(), this.userController.passwordResetCheckEmail()); // second step to reset password

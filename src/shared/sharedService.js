@@ -62,7 +62,6 @@ export class SharedService {
    */
   sendMail(mailOptions) {
     const transporter = libs.emailTransporter;
-    console.log('transporter', transporter);
     return new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {
