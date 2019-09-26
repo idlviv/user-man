@@ -235,6 +235,8 @@ export class UserController {
   }
 
   emailVerificationSend() {
+    const mailOptions = config.get.mailOptionsEmailVerification;
+
     return (req, res, next) => {
       const user = Object.assign({}, req.user._doc);
       const sub = {
@@ -248,12 +250,9 @@ export class UserController {
 
       const url = req.protocol + '://' + req.get('host') +
         '/api/user/email-verification?token=' + token;
-
-      const mailOptions = config.mailOptionsEmailVerification;
-      mailOptions.email = user.email;
+      mailOptions.to = user.email;
       mailOptions.text = mailOptions.text + url;
       mailOptions.html = mailOptions.html + url;
-      mailOptions.to = email;
 
       this.sharedService.sendMail(mailOptions)
           .then(() => res.status(200).json('На Вашу пошту відправлено листа'))
@@ -311,9 +310,11 @@ export class UserController {
     Send reset code on email and write its hash in db
    */
   passwordResetCheckEmail() {
+    const mailOptions = config.get.mailOptionsResetPassword;
     return (req, res, next) => {
       let user;
       let code;
+      const email = req.query.email;
       this.userService.isEmailExists(email, 'local')
           .then((userFromDb) => {
             code = Math.floor(Math.random() * (100000)) + '';
@@ -322,10 +323,11 @@ export class UserController {
           })
           .then((hash) => this.sharedService.updateDocument({ _id: user._doc._id }, { $set: { code: hash, codeTries: 1 } }))
           .then((result) => {
-            const mailOptions = config.mailOptionsEmailVerification;
-            mailOptions.to = req.query.email;
+            mailOptions.to = email;
             mailOptions.text = mailOptions.text + code;
             mailOptions.html = mailOptions.html + code;
+            console.log('mailOptions', mailOptions);
+
             return this.sharedService.sendMail(mailOptions);
           })
           .then((info) => {

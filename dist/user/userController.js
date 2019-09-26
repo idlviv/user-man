@@ -301,6 +301,7 @@ function () {
     value: function emailVerificationSend() {
       var _this6 = this;
 
+      var mailOptions = _config.config.get.mailOptionsEmailVerification;
       return function (req, res, next) {
         var user = Object.assign({}, req.user._doc);
         var sub = {
@@ -313,11 +314,9 @@ function () {
         var token = _this6.sharedService.createJWT('', sub, expire, secret);
 
         var url = req.protocol + '://' + req.get('host') + '/api/user/email-verification?token=' + token;
-        var mailOptions = _config.config.mailOptionsEmailVerification;
-        mailOptions.email = user.email;
+        mailOptions.to = user.email;
         mailOptions.text = mailOptions.text + url;
         mailOptions.html = mailOptions.html + url;
-        mailOptions.to = email;
 
         _this6.sharedService.sendMail(mailOptions).then(function () {
           return res.status(200).json('На Вашу пошту відправлено листа');
@@ -380,9 +379,11 @@ function () {
     value: function passwordResetCheckEmail() {
       var _this7 = this;
 
+      var mailOptions = _config.config.get.mailOptionsResetPassword;
       return function (req, res, next) {
         var user;
         var code;
+        var email = req.query.email;
 
         _this7.userService.isEmailExists(email, 'local').then(function (userFromDb) {
           code = Math.floor(Math.random() * 100000) + '';
@@ -398,10 +399,10 @@ function () {
             }
           });
         }).then(function (result) {
-          var mailOptions = _config.config.mailOptionsEmailVerification;
-          mailOptions.to = req.query.email;
+          mailOptions.to = email;
           mailOptions.text = mailOptions.text + code;
           mailOptions.html = mailOptions.html + code;
+          console.log('mailOptions', mailOptions);
           return _this7.sharedService.sendMail(mailOptions);
         }).then(function (info) {
           var sub = {
