@@ -83,4 +83,16 @@ export class SharedMiddleware {
       }
     };
   }
+
+  setCSRFCookie() {
+    return (req, res, next) => {
+      const { cookieCsrfOptions } = config.get;
+      res.cookie(
+          'XSRF-TOKEN',
+          req.csrfToken(),
+          cookieCsrfOptions
+      );
+      next();
+    };
+  }
 }

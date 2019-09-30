@@ -121,6 +121,15 @@ function () {
         }
       };
     }
+  }, {
+    key: "setCSRFCookie",
+    value: function setCSRFCookie() {
+      return function (req, res, next) {
+        var cookieCsrfOptions = _config.config.get.cookieCsrfOptions;
+        res.cookie('XSRF-TOKEN', req.csrfToken(), cookieCsrfOptions);
+        next();
+      };
+    }
   }]);
 
   return SharedMiddleware;
