@@ -3,9 +3,9 @@ const Formidable = require('formidable');
 
 import { ClientError, ServerError } from '../errors';
 import { config } from '../config';
-import { sharedService } from '../shared';
 import { userService } from './userService';
 import { libs } from '../libs';
+import { sharedService } from '../shared';
 
 export class UserController {
   constructor() {
@@ -326,8 +326,6 @@ export class UserController {
             mailOptions.to = email;
             mailOptions.text = mailOptions.text + code;
             mailOptions.html = mailOptions.html + code;
-            console.log('mailOptions', mailOptions);
-
             return this.sharedService.sendMail(mailOptions);
           })
           .then((info) => {

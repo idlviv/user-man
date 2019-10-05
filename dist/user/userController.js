@@ -9,11 +9,11 @@ var _errors = require("../errors");
 
 var _config = require("../config");
 
-var _shared = require("../shared");
-
 var _userService = require("./userService");
 
 var _libs = require("../libs");
+
+var _shared = require("../shared");
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -402,7 +402,6 @@ function () {
           mailOptions.to = email;
           mailOptions.text = mailOptions.text + code;
           mailOptions.html = mailOptions.html + code;
-          console.log('mailOptions', mailOptions);
           return _this7.sharedService.sendMail(mailOptions);
         }).then(function (info) {
           var sub = {
