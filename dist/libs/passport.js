@@ -92,43 +92,43 @@ function () {
       this.passport.use(new GoogleStrategy({
         clientID: _config2.config.get.googleClientID,
         clientSecret: _config2.config.get.googleClientSecret,
-        callbackURL: _config2.config.get.googleCallbackURL + '/api/user/auth/google/redirect'
+        callbackURL: _config2.config.get.googleCallbackURL + '/api/user/auth/google/redirect',
+        userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
       }, function (accessToken, refreshToken, profile, done) {
         // extract 'account' email
-        var email;
-
-        for (var i = 0; i < profile.emails.length; i++) {
-          if (profile.emails[i].type === 'account') {
-            email = profile.emails[i].value;
-            break;
-          }
-        }
+        console.log('profile', profile); // let email;
+        // for (let i = 0; i < profile.emails.length; i++) {
+        //   if (profile.emails[i].type === 'account') {
+        //     email = profile.emails[i].value;
+        //     break;
+        //   }
+        // }
 
         UserModel.findOne({
-          providersId: profile.id
+          providersId: profile._json.sub
         }).then(function (user) {
           if (user) {
             // if user is already in db update credentials
             return user.set({
-              avatar: profile._json.image.url,
-              name: profile._json.name.givenName,
-              surname: profile._json.name.familyName,
+              avatar: profile._json.picture,
+              name: profile._json.given_name,
+              surname: profile._json.family_name,
               accessToken: accessToken
             }).save();
           } else {
             // if new user, create new record in db
             return new UserModel({
               provider: 'google',
-              login: 'gid_' + profile._json.id,
-              email: email,
-              avatar: profile._json.image.url,
-              name: profile._json.name.givenName,
-              surname: profile._json.name.familyName,
+              login: 'gid_' + profile._json.sub,
+              email: profile._json.email,
+              avatar: profile._json.picture,
+              name: profile._json.given_name,
+              surname: profile._json.family_name,
               role: 'google',
               ban: 0,
               createdAt: Date.now(),
               commentsReadedTill: Date.now(),
-              providersId: profile._json.id,
+              providersId: profile._json.sub,
               accessToken: accessToken,
               refreshToken: refreshToken
             }).save();
@@ -136,7 +136,7 @@ function () {
         }).then(function (user) {
           return done(null, user);
         })["catch"](function (err) {
-          return done(new _errors.DbError(err), false);
+          return done(new _errors.DatabaseError(err), false);
         });
       }));
       var jwtOptions = {};

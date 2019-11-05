@@ -2,7 +2,7 @@ const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 const LocalStrategy = require('passport-local').Strategy;
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
-import { DbError } from '../errors';
+import { DatabaseError } from '../errors';
 import { userService } from '../user/userService';
 import { config } from '../config';
 
@@ -13,7 +13,6 @@ export class Passport {
 
   config() {
     const { UserModel } = config.get;
-
     this.passport.serializeUser((user, done) => {
       return done(null, user._id);
     });
@@ -83,40 +82,42 @@ export class Passport {
               clientID: config.get.googleClientID,
               clientSecret: config.get.googleClientSecret,
               callbackURL: config.get.googleCallbackURL + '/api/user/auth/google/redirect',
+              userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
             },
             (accessToken, refreshToken, profile, done) => {
               // extract 'account' email
-              let email;
-              for (let i = 0; i < profile.emails.length; i++) {
-                if (profile.emails[i].type === 'account') {
-                  email = profile.emails[i].value;
-                  break;
-                }
-              }
-              UserModel.findOne({ providersId: profile.id })
+              console.log('profile', profile);
+              // let email;
+              // for (let i = 0; i < profile.emails.length; i++) {
+              //   if (profile.emails[i].type === 'account') {
+              //     email = profile.emails[i].value;
+              //     break;
+              //   }
+              // }
+              UserModel.findOne({ providersId: profile._json.sub })
                   .then((user) => {
                     if (user) {
                       // if user is already in db update credentials
                       return user.set({
-                        avatar: profile._json.image.url,
-                        name: profile._json.name.givenName,
-                        surname: profile._json.name.familyName,
+                        avatar: profile._json.picture,
+                        name: profile._json.given_name,
+                        surname: profile._json.family_name,
                         accessToken,
                       }).save();
                     } else {
                       // if new user, create new record in db
                       return new UserModel({
                         provider: 'google',
-                        login: 'gid_' + profile._json.id,
-                        email,
-                        avatar: profile._json.image.url,
-                        name: profile._json.name.givenName,
-                        surname: profile._json.name.familyName,
+                        login: 'gid_' + profile._json.sub,
+                        email: profile._json.email,
+                        avatar: profile._json.picture,
+                        name: profile._json.given_name,
+                        surname: profile._json.family_name,
                         role: 'google',
                         ban: 0,
                         createdAt: Date.now(),
                         commentsReadedTill: Date.now(),
-                        providersId: profile._json.id,
+                        providersId: profile._json.sub,
                         accessToken,
                         refreshToken,
                       }).save();
@@ -125,7 +126,7 @@ export class Passport {
                   .then((user) => {
                     return done(null, user);
                   })
-                  .catch((err) => done(new DbError(err), false));
+                  .catch((err) => done(new DatabaseError(err), false));
             }
         ));
 
@@ -162,7 +163,6 @@ export class Passport {
     this.passport.use('jwt.email.verification',
         new JwtStrategy(emailVerificationOptions,
             (req, jwtPayload, done) => {
-
               // check that user which logged in is the same that user who veryfing email
               if (req.user._doc._id.toString() === jwtPayload.sub._id.toString()) {
                 UserModel.findOne({ _id: jwtPayload.sub._id })

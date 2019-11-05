@@ -2,7 +2,6 @@
 // const { router } = config.get;
 import { userController } from './';
 import { sharedMiddleware } from '../shared';
-import { config } from '../config';
 import { libs } from '../libs';
 // router.get('/user/logout',
 //     userController.logout(),
@@ -13,7 +12,7 @@ import { libs } from '../libs';
 // export const userRouter = router;
 
 export class UserRouter {
-  constructor(router, cloudinary) {
+  constructor(router) {
     this.router = router;
     this.cloudinary = libs.cloudinary;
     this.userController = userController;
@@ -62,6 +61,11 @@ export class UserRouter {
         // and passed it to the callback function (./config/passport)
         this.passport.authenticate('google', { session: true }),
 
+        // function(req, res, next) {
+        //   console.log('req', req.query);
+        //   next();
+        // },
+        
         // 5.step: set user cookie (for frontend manipulations)
         this.userController.setFrontendAuthCookie(),
 

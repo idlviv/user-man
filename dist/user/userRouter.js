@@ -9,8 +9,6 @@ var _ = require("./");
 
 var _shared = require("../shared");
 
-var _config = require("../config");
-
 var _libs = require("../libs");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -28,7 +26,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var UserRouter =
 /*#__PURE__*/
 function () {
-  function UserRouter(router, cloudinary) {
+  function UserRouter(router) {
     _classCallCheck(this, UserRouter);
 
     this.router = router;
@@ -58,7 +56,11 @@ function () {
       // and passed it to the callback function (./config/passport)
       this.passport.authenticate('google', {
         session: true
-      }), // 5.step: set user cookie (for frontend manipulations)
+      }), // function(req, res, next) {
+      //   console.log('req', req.query);
+      //   next();
+      // },
+      // 5.step: set user cookie (for frontend manipulations)
       this.userController.setFrontendAuthCookie(), // 6.step: redirect to frontend
       function (req, res, next) {
         res.redirect('/user/redirection-after-oauth');

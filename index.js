@@ -4,6 +4,7 @@ const { userController, UserRouter } = require('./dist').user;
 const { libs } = require('./dist').libs;
 const config = require('./dist/config').config;
 
+
 module.exports = {
   config,
   sharedService,
