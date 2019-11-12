@@ -1,17 +1,23 @@
 const nodemailer = require('nodemailer');
 const cloudinary = require('cloudinary');
-const util = require('util');
 import { passport } from './passport';
-import { config } from '../config';
+import { Config, config } from '../config';
+import { mongoose } from './mongoose';
+import { injector } from '../helpers';
 
-class Libs {
+export class Libs {
   constructor() {
+    this._config = injector.get(Config);
     this._nodemailer = nodemailer;
     this._cloudinary = cloudinary;
     this._passport = passport;
+    this._mongoose = mongoose;
   }
 
   config() {
+    // configure mongoose models
+    this._mongoose.config();
+
     // all libs that must be configured
     this._cloudinary.config({
       cloud_name: config.get.cloudinaryName,
@@ -38,6 +44,10 @@ class Libs {
 
   get passport() {
     return this._passport.get;
+  }
+
+  get mongoose() {
+    return this._mongoose.get;
   }
 }
 

@@ -15,6 +15,8 @@ var _libs = require("../libs");
 
 var _shared = require("../shared");
 
+var _helpers = require("../helpers");
+
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -35,6 +37,7 @@ function () {
 
     this.userService = _userService.userService;
     this.sharedService = _shared.sharedService;
+    this.config = _helpers.injector.get(_config.Config);
   }
   /*
     user create
@@ -47,7 +50,7 @@ function () {
     value: function create() {
       var _this = this;
 
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return function (req, res, next) {
         var user = Object.assign({}, req.body);
         user.provider = 'local';
@@ -79,6 +82,7 @@ function () {
       user login
      */
     value: function login() {
+      // console.log('this.config', this.config);
       return function (req, res, next) {
         if (req.isAuthenticated()) {
           return res.status(200).json('logged in');
@@ -242,7 +246,7 @@ function () {
     value: function editAvatar() {
       var _this5 = this;
 
-      var ObjectId = _config.config.get.ObjectId;
+      var ObjectId = _config.config.get.mongoose.Types.ObjectId;
       var cloudinary = _libs.libs.cloudinary;
       return function (req, res, next) {
         var form = new Formidable.IncomingForm({
@@ -257,6 +261,7 @@ function () {
             }));
           }
 
+          console.log('files', files);
           var user = {};
           Object.assign(user, req.user._doc);
           cloudinary.v2.uploader.upload(files.file.path, {
@@ -328,7 +333,7 @@ function () {
   }, {
     key: "emailVerificationReceive",
     value: function emailVerificationReceive() {
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return function (req, res, next) {
         var user = Object.assign({}, req.user._doc);
         UserModel.findOne({
@@ -426,7 +431,7 @@ function () {
     value: function passwordResetCheckCode() {
       var _this8 = this;
 
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return function (req, res, next) {
         var code = req.query.code;
         var user;

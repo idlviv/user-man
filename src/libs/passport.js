@@ -1,18 +1,19 @@
-const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-const LocalStrategy = require('passport-local').Strategy;
-const JwtStrategy = require('passport-jwt').Strategy;
-const ExtractJwt = require('passport-jwt').ExtractJwt;
+import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
+import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as JwtStrategy } from 'passport-jwt';
+import { ExtractJwt } from 'passport-jwt';
+
 import { DatabaseError } from '../errors';
 import { userService } from '../user/userService';
 import { config } from '../config';
 
-export class Passport {
+class Passport {
   constructor() {
     this.passport = require('passport');
   }
 
   config() {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     this.passport.serializeUser((user, done) => {
       return done(null, user._id);
     });
@@ -76,59 +77,62 @@ export class Passport {
     ));
 
     // google sign in strategy
-    this.passport.use(
-        new GoogleStrategy(
-            {
-              clientID: config.get.googleClientID,
-              clientSecret: config.get.googleClientSecret,
-              callbackURL: config.get.googleCallbackURL + '/api/user/auth/google/redirect',
-              userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
-            },
-            (accessToken, refreshToken, profile, done) => {
-              // extract 'account' email
-              console.log('profile', profile);
-              // let email;
-              // for (let i = 0; i < profile.emails.length; i++) {
-              //   if (profile.emails[i].type === 'account') {
-              //     email = profile.emails[i].value;
-              //     break;
-              //   }
-              // }
-              UserModel.findOne({ providersId: profile._json.sub })
-                  .then((user) => {
-                    if (user) {
-                      // if user is already in db update credentials
-                      return user.set({
-                        avatar: profile._json.picture,
-                        name: profile._json.given_name,
-                        surname: profile._json.family_name,
-                        accessToken,
-                      }).save();
-                    } else {
-                      // if new user, create new record in db
-                      return new UserModel({
-                        provider: 'google',
-                        login: 'gid_' + profile._json.sub,
-                        email: profile._json.email,
-                        avatar: profile._json.picture,
-                        name: profile._json.given_name,
-                        surname: profile._json.family_name,
-                        role: 'google',
-                        ban: 0,
-                        createdAt: Date.now(),
-                        commentsReadedTill: Date.now(),
-                        providersId: profile._json.sub,
-                        accessToken,
-                        refreshToken,
-                      }).save();
-                    }
-                  })
-                  .then((user) => {
-                    return done(null, user);
-                  })
-                  .catch((err) => done(new DatabaseError(err), false));
-            }
-        ));
+    if (config.get.googleSignin) {
+      this.passport.use(
+          new GoogleStrategy(
+              {
+                clientID: config.get.googleClientID,
+                clientSecret: config.get.googleClientSecret,
+                callbackURL: config.get.googleCallbackURL + '/api/user/auth/google/redirect',
+                userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
+              },
+              (accessToken, refreshToken, profile, done) => {
+                // extract 'account' email
+                console.log('profile', profile);
+                // let email;
+                // for (let i = 0; i < profile.emails.length; i++) {
+                //   if (profile.emails[i].type === 'account') {
+                //     email = profile.emails[i].value;
+                //     break;
+                //   }
+                // }
+                UserModel.findOne({ providersId: profile._json.sub })
+                    .then((user) => {
+                      if (user) {
+                        // if user is already in db update credentials
+                        return user.set({
+                          avatar: profile._json.picture,
+                          name: profile._json.given_name,
+                          surname: profile._json.family_name,
+                          accessToken,
+                        }).save();
+                      } else {
+                        // if new user, create new record in db
+                        return new UserModel({
+                          provider: 'google',
+                          login: 'gid_' + profile._json.sub,
+                          email: profile._json.email,
+                          avatar: profile._json.picture,
+                          name: profile._json.given_name,
+                          surname: profile._json.family_name,
+                          role: 'google',
+                          ban: 0,
+                          createdAt: Date.now(),
+                          commentsReadedTill: Date.now(),
+                          providersId: profile._json.sub,
+                          accessToken,
+                          refreshToken,
+                        }).save();
+                      }
+                    })
+                    .then((user) => {
+                      return done(null, user);
+                    })
+                    .catch((err) => done(new DatabaseError(err), false));
+              }
+          ));
+    }
+
 
     const jwtOptions = {};
     jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');

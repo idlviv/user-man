@@ -2,6 +2,7 @@ import { ClientError, DbError } from '../errors';
 import { config } from '../config';
 const bcrypt = require('bcryptjs');
 import { sharedService } from '../shared';
+// import { UserModel } from './userModel';
 
 export class UserService {
   constructor() {
@@ -18,7 +19,7 @@ export class UserService {
    * @memberof UserController
    */
   isEmailUnique(email, provider) {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     return new Promise((resolve, reject) => {
       UserModel.find({ email, provider })
           .then((result) => {
@@ -44,7 +45,7 @@ export class UserService {
    * @memberof UserController
    */
   isLoginUnique(login) {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     return new Promise((resolve, reject) => {
       UserModel.find({ login })
           .then((result) => {
@@ -70,7 +71,7 @@ export class UserService {
  * @return {Promise<UserModel>}
  */
   isEmailExists(email, provider) {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     return new Promise((resolve, reject) => {
       UserModel.findOne({ email, provider })
           .then((user) => {
@@ -91,7 +92,7 @@ export class UserService {
    * @return {Promise<UserModel>}
    */
   isLoginExists(login) {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     return new Promise((resolve, reject) => {
       UserModel.findOne({ login })
           .then((user) => {

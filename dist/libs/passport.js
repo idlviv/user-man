@@ -3,7 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.passport = exports.Passport = void 0;
+exports.passport = void 0;
+
+var _passportGoogleOauth = require("passport-google-oauth");
+
+var _passportLocal = require("passport-local");
+
+var _passportJwt = require("passport-jwt");
 
 var _errors = require("../errors");
 
@@ -17,14 +23,6 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-
-var LocalStrategy = require('passport-local').Strategy;
-
-var JwtStrategy = require('passport-jwt').Strategy;
-
-var ExtractJwt = require('passport-jwt').ExtractJwt;
-
 var Passport =
 /*#__PURE__*/
 function () {
@@ -37,7 +35,7 @@ function () {
   _createClass(Passport, [{
     key: "config",
     value: function config() {
-      var UserModel = _config2.config.get.UserModel;
+      var UserModel = _config2.config.get.mongoose.models.users;
       this.passport.serializeUser(function (user, done) {
         return done(null, user._id);
       });
@@ -49,7 +47,7 @@ function () {
         });
       }); // login user with password
 
-      this.passport.use('local', new LocalStrategy({
+      this.passport.use('local', new _passportLocal.Strategy({
         usernameField: 'login',
         passwordField: 'password'
       }, function (login, password, done) {
@@ -79,7 +77,7 @@ function () {
       })); // login user after creation or change credentials
       // without password
 
-      this.passport.use('localWithoutPassword', new LocalStrategy({
+      this.passport.use('localWithoutPassword', new _passportLocal.Strategy({
         usernameField: 'login'
       }, function (login, password, done) {
         _userService.userService.isLoginExists(login).then(function (userFromDb) {
@@ -89,60 +87,63 @@ function () {
         });
       })); // google sign in strategy
 
-      this.passport.use(new GoogleStrategy({
-        clientID: _config2.config.get.googleClientID,
-        clientSecret: _config2.config.get.googleClientSecret,
-        callbackURL: _config2.config.get.googleCallbackURL + '/api/user/auth/google/redirect',
-        userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
-      }, function (accessToken, refreshToken, profile, done) {
-        // extract 'account' email
-        console.log('profile', profile); // let email;
-        // for (let i = 0; i < profile.emails.length; i++) {
-        //   if (profile.emails[i].type === 'account') {
-        //     email = profile.emails[i].value;
-        //     break;
-        //   }
-        // }
+      if (_config2.config.get.googleSignin) {
+        this.passport.use(new _passportGoogleOauth.OAuth2Strategy({
+          clientID: _config2.config.get.googleClientID,
+          clientSecret: _config2.config.get.googleClientSecret,
+          callbackURL: _config2.config.get.googleCallbackURL + '/api/user/auth/google/redirect',
+          userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
+        }, function (accessToken, refreshToken, profile, done) {
+          // extract 'account' email
+          console.log('profile', profile); // let email;
+          // for (let i = 0; i < profile.emails.length; i++) {
+          //   if (profile.emails[i].type === 'account') {
+          //     email = profile.emails[i].value;
+          //     break;
+          //   }
+          // }
 
-        UserModel.findOne({
-          providersId: profile._json.sub
-        }).then(function (user) {
-          if (user) {
-            // if user is already in db update credentials
-            return user.set({
-              avatar: profile._json.picture,
-              name: profile._json.given_name,
-              surname: profile._json.family_name,
-              accessToken: accessToken
-            }).save();
-          } else {
-            // if new user, create new record in db
-            return new UserModel({
-              provider: 'google',
-              login: 'gid_' + profile._json.sub,
-              email: profile._json.email,
-              avatar: profile._json.picture,
-              name: profile._json.given_name,
-              surname: profile._json.family_name,
-              role: 'google',
-              ban: 0,
-              createdAt: Date.now(),
-              commentsReadedTill: Date.now(),
-              providersId: profile._json.sub,
-              accessToken: accessToken,
-              refreshToken: refreshToken
-            }).save();
-          }
-        }).then(function (user) {
-          return done(null, user);
-        })["catch"](function (err) {
-          return done(new _errors.DatabaseError(err), false);
-        });
-      }));
+          UserModel.findOne({
+            providersId: profile._json.sub
+          }).then(function (user) {
+            if (user) {
+              // if user is already in db update credentials
+              return user.set({
+                avatar: profile._json.picture,
+                name: profile._json.given_name,
+                surname: profile._json.family_name,
+                accessToken: accessToken
+              }).save();
+            } else {
+              // if new user, create new record in db
+              return new UserModel({
+                provider: 'google',
+                login: 'gid_' + profile._json.sub,
+                email: profile._json.email,
+                avatar: profile._json.picture,
+                name: profile._json.given_name,
+                surname: profile._json.family_name,
+                role: 'google',
+                ban: 0,
+                createdAt: Date.now(),
+                commentsReadedTill: Date.now(),
+                providersId: profile._json.sub,
+                accessToken: accessToken,
+                refreshToken: refreshToken
+              }).save();
+            }
+          }).then(function (user) {
+            return done(null, user);
+          })["catch"](function (err) {
+            return done(new _errors.DatabaseError(err), false);
+          });
+        }));
+      }
+
       var jwtOptions = {};
-      jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
+      jwtOptions.jwtFromRequest = _passportJwt.ExtractJwt.fromAuthHeaderWithScheme('jwt');
       jwtOptions.secretOrKey = _config2.config.get.JWTSecret;
-      this.passport.use('jwt', new JwtStrategy(jwtOptions, function (jwtPayload, done) {
+      this.passport.use('jwt', new _passportJwt.Strategy(jwtOptions, function (jwtPayload, done) {
         // на основі _id (витягнутого з токена) робить пошук
         // в базі, чи є такий юзер, і ф-я done повертає відповідь
         UserModel.findOne({
@@ -158,11 +159,11 @@ function () {
         });
       }));
       var emailVerificationOptions = {};
-      emailVerificationOptions.jwtFromRequest = ExtractJwt.fromUrlQueryParameter('token');
+      emailVerificationOptions.jwtFromRequest = _passportJwt.ExtractJwt.fromUrlQueryParameter('token');
       emailVerificationOptions.secretOrKey = _config2.config.get.JWTEmail; // pass req object to callback as first argument
 
       emailVerificationOptions.passReqToCallback = true;
-      this.passport.use('jwt.email.verification', new JwtStrategy(emailVerificationOptions, function (req, jwtPayload, done) {
+      this.passport.use('jwt.email.verification', new _passportJwt.Strategy(emailVerificationOptions, function (req, jwtPayload, done) {
         // check that user which logged in is the same that user who veryfing email
         if (req.user._doc._id.toString() === jwtPayload.sub._id.toString()) {
           UserModel.findOne({
@@ -181,10 +182,10 @@ function () {
         }
       }));
       var jwtOptionsPasswordResetCheckCode = {};
-      jwtOptionsPasswordResetCheckCode.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
+      jwtOptionsPasswordResetCheckCode.jwtFromRequest = _passportJwt.ExtractJwt.fromAuthHeaderWithScheme('jwt');
       jwtOptionsPasswordResetCheckCode.secretOrKey = _config2.config.get.JWTSecretCode; // extract _id from token to identify user, which resets password
 
-      this.passport.use('jwt.passwordResetCheckCode', new JwtStrategy(jwtOptionsPasswordResetCheckCode, function (jwtPayload, done) {
+      this.passport.use('jwt.passwordResetCheckCode', new _passportJwt.Strategy(jwtOptionsPasswordResetCheckCode, function (jwtPayload, done) {
         UserModel.findOne({
           _id: jwtPayload.sub._id
         }).then(function (user) {
@@ -198,9 +199,9 @@ function () {
         });
       }));
       var jwtOptionsPasswordReset = {};
-      jwtOptionsPasswordReset.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
+      jwtOptionsPasswordReset.jwtFromRequest = _passportJwt.ExtractJwt.fromAuthHeaderWithScheme('jwt');
       jwtOptionsPasswordReset.secretOrKey = _config2.config.get.JWTSecretChangePassword;
-      this.passport.use('jwt.passwordReset', new JwtStrategy(jwtOptionsPasswordReset, function (jwtPayload, done) {
+      this.passport.use('jwt.passwordReset', new _passportJwt.Strategy(jwtOptionsPasswordReset, function (jwtPayload, done) {
         UserModel.findOne({
           _id: jwtPayload.sub._id
         }).then(function (user) {
@@ -224,6 +225,5 @@ function () {
   return Passport;
 }();
 
-exports.Passport = Passport;
 var passport = new Passport();
 exports.passport = passport;

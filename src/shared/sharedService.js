@@ -1,10 +1,12 @@
-const jwt = require('jsonwebtoken');
+import * as jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { ServerError, DbError } from '../errors';
 import { libs } from '../libs';
 
 export class SharedService {
-  constructor() {}
+  constructor() {
+    this.jwt = jwt;
+  }
 
   /**
    * Create JWT token
@@ -14,13 +16,12 @@ export class SharedService {
    * @param {number} expire - seconds
    * @param {string} secret - secret key from environment variables
    * @return {string}
-   * @memberof CryptHelper
    */
   createJWT(prefix, sub, expire, secret) {
     const date = Math.floor(Date.now() / 1000); // in seconds
     return (
       prefix +
-      jwt.sign(
+      this.jwt.sign(
           {
             sub,
             iat: date,
@@ -40,7 +41,7 @@ export class SharedService {
    * @return {Promise<object>}
    */
   updateDocument(filter, update, options) {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     return new Promise(function(resolve, reject) {
       UserModel.updateOne(filter, update, options).then(
           (result) => {

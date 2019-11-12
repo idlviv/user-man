@@ -3,10 +3,10 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-Object.defineProperty(exports, "config", {
+Object.defineProperty(exports, "Config", {
   enumerable: true,
   get: function get() {
-    return _config.config;
+    return _config.Config;
   }
 });
 exports.shared = exports.libs = exports.user = exports.errors = void 0;

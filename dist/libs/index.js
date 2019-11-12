@@ -3,11 +3,15 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.libs = void 0;
+exports.libs = exports.Libs = void 0;
 
 var _passport = require("./passport");
 
 var _config2 = require("../config");
+
+var _mongoose = require("./mongoose");
+
+var _helpers = require("../helpers");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -19,23 +23,26 @@ var nodemailer = require('nodemailer');
 
 var cloudinary = require('cloudinary');
 
-var util = require('util');
-
 var Libs =
 /*#__PURE__*/
 function () {
   function Libs() {
     _classCallCheck(this, Libs);
 
+    this._config = _helpers.injector.get(_config2.Config);
     this._nodemailer = nodemailer;
     this._cloudinary = cloudinary;
     this._passport = _passport.passport;
+    this._mongoose = _mongoose.mongoose;
   }
 
   _createClass(Libs, [{
     key: "config",
     value: function config() {
-      // all libs that must be configured
+      // configure mongoose models
+      this._mongoose.config(); // all libs that must be configured
+
+
       this._cloudinary.config({
         cloud_name: _config2.config.get.cloudinaryName,
         api_key: _config2.config.get.cloudinaryKey,
@@ -65,10 +72,16 @@ function () {
     get: function get() {
       return this._passport.get;
     }
+  }, {
+    key: "mongoose",
+    get: function get() {
+      return this._mongoose.get;
+    }
   }]);
 
   return Libs;
 }();
 
+exports.Libs = Libs;
 var libs = new Libs();
 exports.libs = libs;

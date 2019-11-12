@@ -3,9 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.config = exports.Config = void 0;
+exports.injector = exports.Injector = void 0;
 
-var _helpers = require("./helpers");
+var _singleton = require("./singleton");
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -25,40 +25,82 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
-var Config =
+var Injector =
 /*#__PURE__*/
 function (_Singleton) {
-  _inherits(Config, _Singleton);
+  _inherits(Injector, _Singleton);
 
-  function Config() {
+  function Injector() {
     var _this;
 
-    _classCallCheck(this, Config);
+    _classCallCheck(this, Injector);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(Config).call(this)); // initialization
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(Injector).call(this)); // init with empty depenency container
 
-    _this.options = {}; // this.libs = injector.get(Libs);
-
+    _this.container = [];
     return _this;
   }
+  /**
+   * Returns instance of demanded class
+   *
+   * @param {*} InjectedClass // demanded class
+   * @return {Object} // instance of demanded class
+   * @memberof Injector
+   */
 
-  _createClass(Config, [{
-    key: "init",
-    value: function init(options) {
-      // set intial configuration of user-man
-      this.options = options; // configure libs according to intial configuration of user-man
-      // this.libs.config();
-    }
-  }, {
+
+  _createClass(Injector, [{
     key: "get",
-    get: function get() {
-      return this.options;
+    value: function get(InjectedClass) {
+      // if cointainer is not empty
+      if (this.container.length) {
+        // looking for instance of demanded class in container
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = this.container[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var item = _step.value;
+
+            if (item.name === InjectedClass.name) {
+              console.log('container', this.container);
+              return item.instance;
+            }
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+              _iterator["return"]();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      }
+
+      ; // if container is empty or there's no instance
+      // of demanded class in container
+      // then create new instance
+
+      var injectedClass = new InjectedClass();
+      this.container.push({
+        name: InjectedClass.name,
+        instance: injectedClass
+      });
+      console.log('container', this.container);
+      return injectedClass;
     }
   }]);
 
-  return Config;
-}(_helpers.Singleton);
+  return Injector;
+}(_singleton.Singleton);
 
-exports.Config = Config;
-var config = new Config();
-exports.config = config;
+exports.Injector = Injector;
+var injector = new Injector();
+exports.injector = injector;

@@ -5,11 +5,17 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.SharedService = void 0;
 
+var jwt = _interopRequireWildcard(require("jsonwebtoken"));
+
 var _config = require("../config");
 
 var _errors = require("../errors");
 
 var _libs = require("../libs");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -17,13 +23,13 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var jwt = require('jsonwebtoken');
-
 var SharedService =
 /*#__PURE__*/
 function () {
   function SharedService() {
     _classCallCheck(this, SharedService);
+
+    this.jwt = jwt;
   }
   /**
    * Create JWT token
@@ -33,7 +39,6 @@ function () {
    * @param {number} expire - seconds
    * @param {string} secret - secret key from environment variables
    * @return {string}
-   * @memberof CryptHelper
    */
 
 
@@ -42,7 +47,7 @@ function () {
     value: function createJWT(prefix, sub, expire, secret) {
       var date = Math.floor(Date.now() / 1000); // in seconds
 
-      return prefix + jwt.sign({
+      return prefix + this.jwt.sign({
         sub: sub,
         iat: date,
         exp: date + expire
@@ -60,7 +65,7 @@ function () {
   }, {
     key: "updateDocument",
     value: function updateDocument(filter, update, options) {
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return new Promise(function (resolve, reject) {
         UserModel.updateOne(filter, update, options).then(function (result) {
           if (result.ok !== 1) {

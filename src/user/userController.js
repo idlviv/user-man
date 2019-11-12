@@ -2,15 +2,19 @@ const bcrypt = require('bcryptjs');
 const Formidable = require('formidable');
 
 import { ClientError, ServerError } from '../errors';
-import { config } from '../config';
+import { Config, config } from '../config';
 import { userService } from './userService';
 import { libs } from '../libs';
 import { sharedService } from '../shared';
+import { injector } from '../helpers';
+
 
 export class UserController {
+
   constructor() {
     this.userService = userService;
     this.sharedService = sharedService;
+    this.config = injector.get(Config);
   }
 
   /*
@@ -18,7 +22,7 @@ export class UserController {
     invokes 'next()' to login created user
    */
   create() {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     return (req, res, next) => {
       const user = Object.assign({}, req.body);
       user.provider = 'local';
@@ -44,6 +48,7 @@ export class UserController {
     user login
    */
   login() {
+    // console.log('this.config', this.config);
     return (req, res, next) => {
       if (req.isAuthenticated()) {
         return res.status(200).json('logged in');
@@ -188,7 +193,7 @@ export class UserController {
   }
 
   editAvatar() {
-    const { ObjectId } = config.get;
+    const { ObjectId } = config.get.mongoose.Types;
     const cloudinary = libs.cloudinary;
     return (req, res, next) => {
       const form = new Formidable.IncomingForm({ maxFileSize: 8400000 });
@@ -198,6 +203,7 @@ export class UserController {
           return next(new ServerError({ message: 'Помилка завантаження аватара - form parse', status: 400 }));
         }
 
+        console.log('files', files);
         const user = {};
         Object.assign(user, req.user._doc);
         cloudinary.v2.uploader.upload(
@@ -261,7 +267,7 @@ export class UserController {
   };
 
   emailVerificationReceive() {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
 
     return (req, res, next) => {
       const user = Object.assign({}, req.user._doc);
@@ -343,7 +349,7 @@ export class UserController {
     Compare code from email with one in db
   */
   passwordResetCheckCode() {
-    const { UserModel } = config.get;
+    const UserModel = config.get.mongoose.models.users;
     return (req, res, next) => {
       const code = req.query.code;
       let user;

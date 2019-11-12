@@ -1,20 +1,13 @@
-// const passport = require('passport');
-// const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-// const LocalStrategy = require('passport-local').Strategy;
-// const JwtStrategy = require('passport-jwt').Strategy;
-// const ExtractJwt = require('passport-jwt').ExtractJwt;
-// import { DbError } from './errors';
+// import { libs, Libs } from './libs';
+import { Singleton } from './helpers';
+import { injector } from './helpers';
 
-class Config {
+export class Config extends Singleton {
   constructor() {
-    // make singleton
-    if (Config.exists) {
-      return Config.instance;
-    }
-    Config.instance = this;
-    Config.exists = true;
+    super();
     // initialization
     this.options = {};
+    // this.libs = injector.get(Libs);
   }
 
   get get() {
@@ -22,7 +15,11 @@ class Config {
   }
 
   init(options) {
+    // set intial configuration of user-man
     this.options = options;
+
+    // configure libs according to intial configuration of user-man
+    // this.libs.config();
   }
 }
 

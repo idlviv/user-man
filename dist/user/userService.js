@@ -19,6 +19,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 var bcrypt = require('bcryptjs');
 
+// import { UserModel } from './userModel';
 var UserService =
 /*#__PURE__*/
 function () {
@@ -41,7 +42,7 @@ function () {
   _createClass(UserService, [{
     key: "isEmailUnique",
     value: function isEmailUnique(email, provider) {
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return new Promise(function (resolve, reject) {
         UserModel.find({
           email: email,
@@ -72,7 +73,7 @@ function () {
   }, {
     key: "isLoginUnique",
     value: function isLoginUnique(login) {
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return new Promise(function (resolve, reject) {
         UserModel.find({
           login: login
@@ -102,7 +103,7 @@ function () {
   }, {
     key: "isEmailExists",
     value: function isEmailExists(email, provider) {
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return new Promise(function (resolve, reject) {
         UserModel.findOne({
           email: email,
@@ -132,7 +133,7 @@ function () {
   }, {
     key: "isLoginExists",
     value: function isLoginExists(login) {
-      var UserModel = _config.config.get.UserModel;
+      var UserModel = _config.config.get.mongoose.models.users;
       return new Promise(function (resolve, reject) {
         UserModel.findOne({
           login: login
