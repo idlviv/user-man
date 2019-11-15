@@ -3,17 +3,27 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-Object.defineProperty(exports, "UserRouter", {
+Object.defineProperty(exports, "UserController", {
   enumerable: true,
   get: function get() {
-    return _userRouter.UserRouter;
+    return _userController.UserController;
   }
 });
-exports.userController = void 0;
+Object.defineProperty(exports, "UserService", {
+  enumerable: true,
+  get: function get() {
+    return _userService.UserService;
+  }
+});
+Object.defineProperty(exports, "UserHelper", {
+  enumerable: true,
+  get: function get() {
+    return _userHelper.UserHelper;
+  }
+});
 
 var _userController = require("./userController");
 
-var _userRouter = require("./userRouter");
+var _userService = require("./userService");
 
-var userController = new _userController.UserController();
-exports.userController = userController;
+var _userHelper = require("./userHelper");

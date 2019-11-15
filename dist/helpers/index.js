@@ -9,13 +9,5 @@ Object.defineProperty(exports, "Singleton", {
     return _singleton.Singleton;
   }
 });
-Object.defineProperty(exports, "injector", {
-  enumerable: true,
-  get: function get() {
-    return _injector.injector;
-  }
-});
 
 var _singleton = require("./singleton");
-
-var _injector = require("./injector");

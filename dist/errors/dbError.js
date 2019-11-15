@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.DatabaseError = void 0;
+exports.DbError = void 0;
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -31,24 +31,24 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
  * Database errors 500..
  *
  * @export
- * @class DatabaseError
+ * @class DbError
  * @extends {Error}
  * @param {object|null} err
  * @param {string|null} err.message
  * @param {number|null} err.status
  * @param {number|string|null} err.code
  */
-var DatabaseError =
+var DbError =
 /*#__PURE__*/
 function (_Error) {
-  _inherits(DatabaseError, _Error);
+  _inherits(DbError, _Error);
 
-  function DatabaseError(err) {
+  function DbError(err) {
     var _this;
 
-    _classCallCheck(this, DatabaseError);
+    _classCallCheck(this, DbError);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(DatabaseError).call(this));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(DbError).call(this));
     _this.message = err && err.message ? 'DatabaseError, ' + err.message : 'DatabaseError';
     _this.status = err && err.status ? err.status : 500;
     _this.code = err && err.code ? err.code : 0;
@@ -56,7 +56,7 @@ function (_Error) {
     return _this;
   }
 
-  return DatabaseError;
+  return DbError;
 }(_wrapNativeSuper(Error));
 
-exports.DatabaseError = DatabaseError;
+exports.DbError = DbError;

@@ -1,5 +1,5 @@
 import { SharedService } from './sharedService';
 import { SharedMiddleware } from './sharedMiddleware';
+import { UserRouter } from './routes/userRouter';
 
-export const sharedService = new SharedService();
-export const sharedMiddleware = new SharedMiddleware();
+export { SharedMiddleware, SharedService, UserRouter };

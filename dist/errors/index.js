@@ -15,10 +15,10 @@ Object.defineProperty(exports, "ServerError", {
     return _serverError.ServerError;
   }
 });
-Object.defineProperty(exports, "DatabaseError", {
+Object.defineProperty(exports, "DbError", {
   enumerable: true,
   get: function get() {
-    return _dbError.DatabaseError;
+    return _dbError.DbError;
   }
 });
 

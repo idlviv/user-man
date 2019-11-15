@@ -2,14 +2,14 @@
  * Database errors 500..
  *
  * @export
- * @class DatabaseError
+ * @class DbError
  * @extends {Error}
  * @param {object|null} err
  * @param {string|null} err.message
  * @param {number|null} err.status
  * @param {number|string|null} err.code
  */
-export class DatabaseError extends Error {
+export class DbError extends Error {
   constructor(err) {
     super();
     this.message = err && err.message ? 'DatabaseError, ' + err.message : 'DatabaseError';

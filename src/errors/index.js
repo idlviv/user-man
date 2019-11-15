@@ -1,6 +1,6 @@
 import { ClientError } from './clientError';
 import { ServerError } from './serverError';
-import { DatabaseError } from './dbError';
+import { DbError } from './dbError';
 
-export { ClientError, ServerError, DatabaseError };
+export { ClientError, ServerError, DbError };
 

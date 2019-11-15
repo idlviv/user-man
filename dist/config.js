@@ -37,8 +37,7 @@ function (_Singleton) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Config).call(this)); // initialization
 
-    _this.options = {}; // this.libs = injector.get(Libs);
-
+    _this.options = {};
     return _this;
   }
 
@@ -46,8 +45,7 @@ function (_Singleton) {
     key: "init",
     value: function init(options) {
       // set intial configuration of user-man
-      this.options = options; // configure libs according to intial configuration of user-man
-      // this.libs.config();
+      this.options = options;
     }
   }, {
     key: "get",

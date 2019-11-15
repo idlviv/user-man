@@ -5,17 +5,27 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.UserController = void 0;
 
+var bcrypt = _interopRequireWildcard(require("bcryptjs"));
+
+var Formidable = _interopRequireWildcard(require("Formidable"));
+
 var _errors = require("../errors");
 
 var _config = require("../config");
 
 var _userService = require("./userService");
 
+var _userHelper = require("./userHelper");
+
 var _libs = require("../libs");
 
 var _shared = require("../shared");
 
-var _helpers = require("../helpers");
+var _injector = require("../injector");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -25,19 +35,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var bcrypt = require('bcryptjs');
-
-var Formidable = require('formidable');
-
 var UserController =
 /*#__PURE__*/
 function () {
   function UserController() {
     _classCallCheck(this, UserController);
 
-    this.userService = _userService.userService;
-    this.sharedService = _shared.sharedService;
-    this.config = _helpers.injector.get(_config.Config);
+    this.userService = _injector.injector.get(_userService.UserService);
+    this.userHelper = _injector.injector.get(_userHelper.UserHelper);
+    this.sharedService = _injector.injector.get(_shared.SharedService);
+    this.config = _injector.injector.get(_config.Config);
+    this.libs = _injector.injector.get(_libs.Libs);
+    this.bcrypt = bcrypt;
+    this.Formidable = Formidable;
   }
   /*
     user create
@@ -50,15 +60,15 @@ function () {
     value: function create() {
       var _this = this;
 
-      var UserModel = _config.config.get.mongoose.models.users;
+      var UserModel = this.config.get.mongoose.models.users;
       return function (req, res, next) {
         var user = Object.assign({}, req.body);
         user.provider = 'local';
 
-        _this.userService.isEmailUnique(user.email, user.provider).then(function () {
-          return _this.userService.isLoginUnique(user.login);
+        _this.userHelper.isEmailUnique(user.email, user.provider).then(function () {
+          return _this.userHelper.isLoginUnique(user.login);
         }).then(function () {
-          return bcrypt.hash(req.body.password, 10);
+          return _this.bcrypt.hash(req.body.password, 10);
         }).then(function (hash) {
           user.password = hash;
           user.role = 'guest';
@@ -124,51 +134,46 @@ function () {
         };
         return res.status(200).json(user);
       };
-    }
-    /*
-      set cookie to frontend with users credential
-    */
+    } // /*
+    //   set cookie to frontend with users credential
+    // */
+    // setFrontendAuthCookie() {
+    //   const { JWTSecret, cookieName } = config.get;
+    //   return (req, res, next) => {
+    //     let token;
+    //     if (req.isAuthenticated()) {
+    //       const user = {
+    //         _id: req.user._doc._id,
+    //         login: req.user._doc.login,
+    //         name: req.user._doc.name,
+    //         surname: req.user._doc.surname,
+    //         avatar: req.user._doc.avatar,
+    //         provider: req.user._doc.provider,
+    //         role: req.user._doc.role,
+    //         commentsReadedTill: req.user._doc.commentsReadedTill,
+    //       };
+    //       token = this.sharedService.createJWT('', user, null, JWTSecret);
+    //     } else {
+    //       token = this.sharedService.createJWT('', null, null, JWTSecret);
+    //     }
+    //     res.cookie(
+    //         cookieName,
+    //         token,
+    //         {
+    //         // 'secure': false,
+    //           httpOnly: false,
+    //           // maxAge: null,
+    //           sameSite: 'Strict',
+    //         }
+    //     );
+    //     next();
+    //   };
+    // }
 
-  }, {
-    key: "setFrontendAuthCookie",
-    value: function setFrontendAuthCookie() {
-      var _this2 = this;
-
-      var _config$get = _config.config.get,
-          JWTSecret = _config$get.JWTSecret,
-          cookieName = _config$get.cookieName;
-      return function (req, res, next) {
-        var token;
-
-        if (req.isAuthenticated()) {
-          var user = {
-            _id: req.user._doc._id,
-            login: req.user._doc.login,
-            name: req.user._doc.name,
-            surname: req.user._doc.surname,
-            avatar: req.user._doc.avatar,
-            provider: req.user._doc.provider,
-            role: req.user._doc.role,
-            commentsReadedTill: req.user._doc.commentsReadedTill
-          };
-          token = _this2.sharedService.createJWT('', user, null, JWTSecret);
-        } else {
-          token = _this2.sharedService.createJWT('', null, null, JWTSecret);
-        }
-
-        res.cookie(cookieName, token, {
-          // 'secure': false,
-          httpOnly: false,
-          // maxAge: null,
-          sameSite: 'Strict'
-        });
-        next();
-      };
-    }
   }, {
     key: "userEdit",
     value: function userEdit() {
-      var _this3 = this;
+      var _this2 = this;
 
       return function (req, res, next) {
         var user = {};
@@ -176,10 +181,10 @@ function () {
         Object.assign(user, req.user._doc);
         Object.assign(modificationRequest, req.body);
 
-        _this3.userService.isPasswordMatched(modificationRequest.password, user.password, user).then(function (user) {
+        _this2.userHelper.isPasswordMatched(modificationRequest.password, user.password, user).then(function (user) {
           if (modificationRequest.name === 'password') {
-            return bcrypt.hash(modificationRequest.value, 10).then(function (hash) {
-              return _this3.sharedService.updateDocument({
+            return _this2.bcrypt.hash(modificationRequest.value, 10).then(function (hash) {
+              return _this2.sharedService.updateDocument({
                 _id: user._id
               }, {
                 $set: {
@@ -189,7 +194,7 @@ function () {
               });
             });
           } else {
-            return _this3.sharedService.updateDocument({
+            return _this2.sharedService.updateDocument({
               _id: user._id
             }, {
               $set: _defineProperty({}, modificationRequest.name, modificationRequest.value)
@@ -214,7 +219,7 @@ function () {
   }, {
     key: "userEditUnsecure",
     value: function userEditUnsecure() {
-      var _this4 = this;
+      var _this3 = this;
 
       return function (req, res, next) {
         var user = {};
@@ -224,7 +229,7 @@ function () {
         var date = Date.now();
 
         if (modificationRequest.name === 'commentsReadedTill') {
-          _this4.sharedService.updateDocument({
+          _this3.sharedService.updateDocument({
             _id: user._id
           }, {
             $set: _defineProperty({}, modificationRequest.name, date)
@@ -244,15 +249,15 @@ function () {
   }, {
     key: "editAvatar",
     value: function editAvatar() {
-      var _this5 = this;
+      var _this4 = this;
 
-      var ObjectId = _config.config.get.mongoose.Types.ObjectId;
-      var cloudinary = _libs.libs.cloudinary;
+      var ObjectId = this.config.get.mongoose.Types.ObjectId;
+      var cloudinary = this.libs.cloudinary;
       return function (req, res, next) {
         var form = new Formidable.IncomingForm({
           maxFileSize: 8400000
         });
-        var that = _this5;
+        var that = _this4;
         form.parse(req, function (err, fields, files) {
           if (err) {
             return next(new _errors.ServerError({
@@ -261,7 +266,6 @@ function () {
             }));
           }
 
-          console.log('files', files);
           var user = {};
           Object.assign(user, req.user._doc);
           cloudinary.v2.uploader.upload(files.file.path, {
@@ -304,9 +308,9 @@ function () {
   }, {
     key: "emailVerificationSend",
     value: function emailVerificationSend() {
-      var _this6 = this;
+      var _this5 = this;
 
-      var mailOptions = _config.config.get.mailOptionsEmailVerification;
+      var mailOptions = this.config.get.mailOptionsEmailVerification;
       return function (req, res, next) {
         var user = Object.assign({}, req.user._doc);
         var sub = {
@@ -314,16 +318,16 @@ function () {
           email: user.email
         };
         var expire = 60 * 60;
-        var secret = _config.config.get.JWTEmail;
+        var secret = _this5.config.get.JWTEmail;
 
-        var token = _this6.sharedService.createJWT('', sub, expire, secret);
+        var token = _this5.sharedService.createJWT('', sub, expire, secret);
 
         var url = req.protocol + '://' + req.get('host') + '/api/user/email-verification?token=' + token;
         mailOptions.to = user.email;
         mailOptions.text = mailOptions.text + url;
         mailOptions.html = mailOptions.html + url;
 
-        _this6.sharedService.sendMail(mailOptions).then(function () {
+        _this5.sharedService.sendMail(mailOptions).then(function () {
           return res.status(200).json('На Вашу пошту відправлено листа');
         })["catch"](function (err) {
           return next(err);
@@ -333,7 +337,7 @@ function () {
   }, {
     key: "emailVerificationReceive",
     value: function emailVerificationReceive() {
-      var UserModel = _config.config.get.mongoose.models.users;
+      var UserModel = this.config.get.mongoose.models.users;
       return function (req, res, next) {
         var user = Object.assign({}, req.user._doc);
         UserModel.findOne({
@@ -382,20 +386,20 @@ function () {
       Send reset code on email and write its hash in db
      */
     value: function passwordResetCheckEmail() {
-      var _this7 = this;
+      var _this6 = this;
 
-      var mailOptions = _config.config.get.mailOptionsResetPassword;
+      var mailOptions = this.config.get.mailOptionsResetPassword;
       return function (req, res, next) {
         var user;
         var code;
         var email = req.query.email;
 
-        _this7.userService.isEmailExists(email, 'local').then(function (userFromDb) {
+        _this6.userHelper.isEmailExists(email, 'local').then(function (userFromDb) {
           code = Math.floor(Math.random() * 100000) + '';
           user = userFromDb;
-          return bcrypt.hash(code, 10);
+          return _this6.bcrypt.hash(code, 10);
         }).then(function (hash) {
-          return _this7.sharedService.updateDocument({
+          return _this6.sharedService.updateDocument({
             _id: user._doc._id
           }, {
             $set: {
@@ -407,13 +411,13 @@ function () {
           mailOptions.to = email;
           mailOptions.text = mailOptions.text + code;
           mailOptions.html = mailOptions.html + code;
-          return _this7.sharedService.sendMail(mailOptions);
+          return _this6.sharedService.sendMail(mailOptions);
         }).then(function (info) {
           var sub = {
             _id: user._id
           }; // token to identify user
 
-          var codeToken = _this7.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretCode);
+          var codeToken = _this6.sharedService.createJWT('JWT ', sub, 300, _this6.config.get.JWTSecretCode);
 
           return res.status(200).json(codeToken);
         })["catch"](function (err) {
@@ -429,9 +433,9 @@ function () {
   }, {
     key: "passwordResetCheckCode",
     value: function passwordResetCheckCode() {
-      var _this8 = this;
+      var _this7 = this;
 
-      var UserModel = _config.config.get.mongoose.models.users;
+      var UserModel = this.config.get.mongoose.models.users;
       return function (req, res, next) {
         var code = req.query.code;
         var user;
@@ -456,18 +460,18 @@ function () {
           } // if code doesn't match then throw error with code 'wrongCredentials' here
 
 
-          return _this8.userService.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
+          return _this7.userHelper.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
         }).then(function (userFromDb) {
           var sub = {
             _id: userFromDb._doc._id
           }; // token to identify user
 
-          var changePasswordToken = _this8.sharedService.createJWT('JWT ', sub, 300, _config.config.get.JWTSecretChangePassword);
+          var changePasswordToken = _this7.sharedService.createJWT('JWT ', sub, 300, _this7.config.get.JWTSecretChangePassword);
 
           return res.status(200).json(changePasswordToken);
         })["catch"](function (err) {
           if (err.code === 'wrongCredentials') {
-            _this8.userService.updatePasswordResetOptions(user).then(function () {
+            _this7.userService.updatePasswordResetOptions(user).then(function () {
               return next(err);
             });
           } else {
@@ -484,14 +488,15 @@ function () {
   }, {
     key: "passwordReset",
     value: function passwordReset() {
-      var _this9 = this;
+      var _this8 = this;
 
       return function (req, res, next) {
         var user = {};
         Object.assign(user, req.user._doc);
         var password = req.query.password;
-        bcrypt.hash(password, 10).then(function (hash) {
-          return _this9.sharedService.updateDocument({
+
+        _this8.bcrypt.hash(password, 10).then(function (hash) {
+          return _this8.sharedService.updateDocument({
             _id: user._id
           }, {
             $set: {

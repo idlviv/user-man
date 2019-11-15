@@ -1,14 +1,17 @@
-import { config } from '../config';
+import { Config} from '../config';
+import { injector } from '../injector';
 
-class Mongoose {
-  constructor() {}
+export class Mongoose {
+  constructor() {
+    this._config = injector.get(Config);
+  }
 
   get get() {
-    return config.get.mongoose;
+    return this._config.get.mongoose;
   }
 
   config() {
-    const { mongoose, mongoose: { Schema } } = config.get;
+    const { mongoose, mongoose: { Schema } } = this._config.get;
 
     const UserSchema = new Schema({
       provider: {
@@ -28,7 +31,7 @@ class Mongoose {
       },
       avatar: {
         type: String,
-        default: config.get.defaultAvatar,
+        default: this._config.get.defaultAvatar,
       },
       name: {
         type: String,
@@ -141,4 +144,4 @@ class Mongoose {
   }
 }
 
-export const mongoose = new Mongoose();
+// export const mongoose = new Mongoose();

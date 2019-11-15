@@ -1,20 +1,16 @@
-const { sharedService, sharedMiddleware } = require('./dist').shared;
 const { ClientError, ServerError, DbError } = require('./dist').errors;
-const { userController, UserRouter} = require('./dist').user;
-const { Libs, libs } = require('./dist').libs;
-const { Config } = require('./dist');
-// const { config, Config }= require('./dist');
+const { libs, sharedMiddleware, sharedService} = require('./dist');
+const { Config, UserRouter, Libs } = require('./dist');
+
 
 module.exports = {
-  // config,
-  Config,
-  sharedService,
-  sharedMiddleware,
-  ClientError,
-  ServerError,
-  DbError,
-  userController,
-  UserRouter,
+  userManInit() {
+    // all middlewates that should be inserted in express
+    return sharedMiddleware.userManInit();
+  },
+  libs, sharedMiddleware, sharedService,
   Libs,
-  libs,
+  Config,
+  ClientError, ServerError, DbError,
+  UserRouter,
 };

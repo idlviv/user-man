@@ -4,16 +4,21 @@ import { Strategy as JwtStrategy } from 'passport-jwt';
 import { ExtractJwt } from 'passport-jwt';
 
 import { DatabaseError } from '../errors';
-import { userService } from '../user/userService';
-import { config } from '../config';
+import { Config } from '../config';
+import { UserHelper } from '../user';
+import { injector } from '../injector';
+// import { Mongoose } from './mongoose';
 
-class Passport {
+export class Passport {
   constructor() {
     this.passport = require('passport');
+    this.userHelper = injector.get(UserHelper);
+    this._config = injector.get(Config);
+    // this.mongoose = injector.get(Mongoose);
   }
 
   config() {
-    const UserModel = config.get.mongoose.models.users;
+    const UserModel = this._config.get.mongoose.models.users;
     this.passport.serializeUser((user, done) => {
       return done(null, user._id);
     });
@@ -37,14 +42,14 @@ class Passport {
             password,
           };
           let user;
-          userService.isLoginExists(userCandidate.login)
+          this.userHelper.isLoginExists(userCandidate.login)
               .then((userFromDb) => {
                 user = userFromDb;
-                return userService.isPasswordLocked(userFromDb);
+                return this.userHelper.isPasswordLocked(userFromDb);
               })
           // if password doesn't match then throw error with code 'wrongCredentials' here
               .then((userFromDb) => {
-                return userService.isPasswordMatched(userCandidate.password, userFromDb._doc.password, userFromDb);
+                return this.userHelper.isPasswordMatched(userCandidate.password, userFromDb._doc.password, userFromDb);
               }
               )
               .then((userFromDb) => {
@@ -52,7 +57,7 @@ class Passport {
               })
               .catch((err) => {
                 if (err.code === 'wrongCredentials') {
-                  userService.updatePasswordLockOptions(user)
+                  this.userHelper.updatePasswordLockOptions(user)
                       .then(() => done(err, false));
                 } else {
                   done(err, false);
@@ -68,7 +73,7 @@ class Passport {
           usernameField: 'login',
         },
         (login, password, done) => {
-          userService.isLoginExists(login)
+          this.userHelper.isLoginExists(login)
               .then((userFromDb) => {
                 done(null, userFromDb);
               })
@@ -77,13 +82,13 @@ class Passport {
     ));
 
     // google sign in strategy
-    if (config.get.googleSignin) {
+    if (this._config.get.googleSignin) {
       this.passport.use(
           new GoogleStrategy(
               {
-                clientID: config.get.googleClientID,
-                clientSecret: config.get.googleClientSecret,
-                callbackURL: config.get.googleCallbackURL + '/api/user/auth/google/redirect',
+                clientID: this._config.get.googleClientID,
+                clientSecret: this._config.get.googleClientSecret,
+                callbackURL: this._config.get.googleCallbackURL + '/api/user/auth/google/redirect',
                 userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
               },
               (accessToken, refreshToken, profile, done) => {
@@ -136,7 +141,7 @@ class Passport {
 
     const jwtOptions = {};
     jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
-    jwtOptions.secretOrKey = config.get.JWTSecret;
+    jwtOptions.secretOrKey = this._config.get.JWTSecret;
 
     this.passport.use('jwt',
         new JwtStrategy(jwtOptions, (jwtPayload, done) => {
@@ -159,7 +164,7 @@ class Passport {
 
     const emailVerificationOptions = {};
     emailVerificationOptions.jwtFromRequest = ExtractJwt.fromUrlQueryParameter('token');
-    emailVerificationOptions.secretOrKey = config.get.JWTEmail;
+    emailVerificationOptions.secretOrKey = this._config.get.JWTEmail;
 
     // pass req object to callback as first argument
     emailVerificationOptions.passReqToCallback = true;
@@ -188,7 +193,7 @@ class Passport {
 
     const jwtOptionsPasswordResetCheckCode = {};
     jwtOptionsPasswordResetCheckCode.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
-    jwtOptionsPasswordResetCheckCode.secretOrKey = config.get.JWTSecretCode;
+    jwtOptionsPasswordResetCheckCode.secretOrKey = this._config.get.JWTSecretCode;
     // extract _id from token to identify user, which resets password
     this.passport.use('jwt.passwordResetCheckCode',
         new JwtStrategy(jwtOptionsPasswordResetCheckCode, (jwtPayload, done) => {
@@ -208,7 +213,7 @@ class Passport {
 
     const jwtOptionsPasswordReset = {};
     jwtOptionsPasswordReset.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('jwt');
-    jwtOptionsPasswordReset.secretOrKey = config.get.JWTSecretChangePassword;
+    jwtOptionsPasswordReset.secretOrKey = this._config.get.JWTSecretChangePassword;
 
     this.passport.use('jwt.passwordReset',
         new JwtStrategy(jwtOptionsPasswordReset, (jwtPayload, done) => {
@@ -232,5 +237,5 @@ class Passport {
   }
 }
 
-export const passport = new Passport();
+// export const passport = new Passport();
 

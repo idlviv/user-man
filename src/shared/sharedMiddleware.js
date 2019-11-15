@@ -1,13 +1,38 @@
-// import * as rp from 'request-promise-native';
-const rp = require('request-promise-native');
+import * as rp from 'request-promise-native';
+// const rp = require('request-promise-native');
 import { ClientError } from '../errors';
-import { config } from '../config';
-import { sharedService } from './';
+import { Config } from '../config';
+import { SharedService } from './';
+import { injector } from '../injector';
+import { Passport } from '../libs/passport';
 
 export class SharedMiddleware {
   constructor() {
     this.rp = rp;
-    this.sharedService = sharedService;
+    this.sharedService = injector.get(SharedService);
+    this.config = injector.get(Config);
+    this.passport = injector.get(Passport).get;
+  }
+
+  /**
+   * all middlewates that should be inserted in express
+   *
+   * @return {Array} // array of middlewares
+   * @memberof SharedMiddleware
+   */
+  userManInit() {
+    return [
+      this.passport.initialize(),
+      this.passport.session(),
+      // // set custom cookie for angular XSRF-TOKEN
+      this.setCSRFCookie(),
+      // // set frontend authentication cookie
+      this.setFrontendAuthCookie(),
+      // (req, res, next) => {
+      //   console.log('init');
+      //   next();
+      // },
+    ];
   }
 
   recaptcha() {
@@ -19,7 +44,7 @@ export class SharedMiddleware {
         recaptcha === undefined) {
         return next(new ClientError({ message: 'Помилка коду recaptcha', status: 403, code: 'recaptchaErr' }));
       }
-      const { recaptchaSecret } = config.get;
+      const { recaptchaSecret } = this.config.get;
 
       const recaptchaURL = `https://www.google.com/recaptcha/api/siteverify?secret=
           ${recaptchaSecret}&response=${recaptcha}&
@@ -70,7 +95,7 @@ export class SharedMiddleware {
   authorization(restrictedRole) {
     return (req, res, next) => {
       const usersRole = req.user._doc.role;
-      const { permissions } = config.get;
+      const { permissions } = this.config.get;
       if (usersRole in permissions) {
         if (permissions[usersRole].indexOf(restrictedRole) >= 0) {
           return next();
@@ -98,7 +123,7 @@ export class SharedMiddleware {
       }
       const requiredRoleForAuthorization = req.query.role;
 
-      const { permissions } = config.get;
+      const { permissions } = this.config.get;
       if (permissions[roleFromSession].indexOf(requiredRoleForAuthorization) >= 0) {
         return res.status(200).json(true);
       } else {
@@ -109,8 +134,7 @@ export class SharedMiddleware {
 
   setCSRFCookie() {
     return (req, res, next) => {
-      const { cookieCsrfOptions } = config.get;
-
+      const { cookieCsrfOptions } = this.config.get;
       res.cookie(
           'XSRF-TOKEN',
           req.csrfToken(),
@@ -120,9 +144,46 @@ export class SharedMiddleware {
     };
   }
 
+  /*
+   set cookie to frontend with users credential
+ */
+  setFrontendAuthCookie() {
+    return (req, res, next) => {
+      const { JWTSecret, cookieName } = this.config.get;
+
+      let token;
+      if (req.isAuthenticated()) {
+        const user = {
+          _id: req.user._doc._id,
+          login: req.user._doc.login,
+          name: req.user._doc.name,
+          surname: req.user._doc.surname,
+          avatar: req.user._doc.avatar,
+          provider: req.user._doc.provider,
+          role: req.user._doc.role,
+          commentsReadedTill: req.user._doc.commentsReadedTill,
+        };
+        token = this.sharedService.createJWT('', user, null, JWTSecret);
+      } else {
+        token = this.sharedService.createJWT('', null, null, JWTSecret);
+      }
+      res.cookie(
+          cookieName,
+          token,
+          {
+          // 'secure': false,
+            httpOnly: false,
+            // maxAge: null,
+            sameSite: 'Strict',
+          }
+      );
+      next();
+    };
+  }
+
   sendFeedbackMessage() {
     return (req, res, next) => {
-      const mailOptions = config.get.mailOptionsQuestionFromSite;
+      const mailOptions = this.config.get.mailOptionsQuestionFromSite;
       const feedback = {};
       Object.assign(feedback, req.body);
 
@@ -135,26 +196,6 @@ export class SharedMiddleware {
       this.sharedService.sendMail(mailOptions)
           .then(() => res.status(200).json('Повідомлення надіслано.'))
           .catch((err) => next(err));
-
-      // let mailOptions = {
-      //   from: 'HMade <questionfromsite@hmade.work>',
-      //   to: 'info@hmade.work',
-      //   subject: 'Питання з сайту',
-      //   text: 'Питання ${feedback.message}. Контакти ${feedback.contacts}. Ім\'я ${feedback.name}',
-      //   html: '<p><span style="font-weight: bold;">Питання: </span>' +
-      //     feedback.message + '</p>' +
-      //     '<p><span style="font-weight: bold">Контакти: </span>' +
-      //     feedback.contacts + '</p>' +
-      //     '<p><span style="font-weight: bold">Ім\'я: </span>' +
-      //     feedback.name + '</p>',
-      // };
-
-      // transporter.sendMail(mailOptions, (err, info) => {
-      //   if (err) {
-      //     return next(new ApplicationError(err.message, err.status));
-      //   }
-      //   return res.status(200).json(new ResObj(true, 'Повідомлення надіслано'));
-      // });
     };
   };
 }

@@ -13,6 +13,8 @@ var _errors = require("../errors");
 
 var _libs = require("../libs");
 
+var _injector = require("../injector");
+
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -30,6 +32,8 @@ function () {
     _classCallCheck(this, SharedService);
 
     this.jwt = jwt;
+    this.config = _injector.injector.get(_config.Config);
+    this.libs = _injector.injector.get(_libs.Libs);
   }
   /**
    * Create JWT token
@@ -65,7 +69,7 @@ function () {
   }, {
     key: "updateDocument",
     value: function updateDocument(filter, update, options) {
-      var UserModel = _config.config.get.mongoose.models.users;
+      var UserModel = this.config.get.mongoose.models.users;
       return new Promise(function (resolve, reject) {
         UserModel.updateOne(filter, update, options).then(function (result) {
           if (result.ok !== 1) {
@@ -88,7 +92,7 @@ function () {
   }, {
     key: "sendMail",
     value: function sendMail(mailOptions) {
-      var transporter = _libs.libs.emailTransporter;
+      var transporter = this.libs.emailTransporter;
       return new Promise(function (resolve, reject) {
         transporter.sendMail(mailOptions, function (err, info) {
           if (err) {

@@ -5,13 +5,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.UserRouter = void 0;
 
-var _ = require("./");
+var _user = require("../../user");
 
-var _shared = require("../shared");
+var _ = require("..");
 
-var _libs = require("../libs");
+var _libs = require("../../libs");
 
-var _injector = require("../injector");
+var _passport = require("../../libs/passport");
+
+var _injector = require("../../injector");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -26,10 +28,12 @@ function () {
     _classCallCheck(this, UserRouter);
 
     this.router = router;
-    this.cloudinary = _libs.libs.cloudinary;
-    this.passport = _libs.libs.passport;
-    this.userController = _injector.injector.get(_.UserController);
-    this.sharedMiddleware = _injector.injector.get(_shared.SharedMiddleware);
+    this.libs = _injector.injector.get(_libs.Libs);
+    this.passport = _injector.injector.get(_passport.Passport).get;
+    this.cloudinary = this.libs.cloudinary; // this.passport = this.libs.passport;
+
+    this.userController = _injector.injector.get(_user.UserController);
+    this.sharedMiddleware = _injector.injector.get(_.SharedMiddleware);
   }
 
   _createClass(UserRouter, [{

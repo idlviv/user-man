@@ -1,11 +1,14 @@
 import * as jwt from 'jsonwebtoken';
-import { config } from '../config';
+import { Config } from '../config';
 import { ServerError, DbError } from '../errors';
-import { libs } from '../libs';
+import { Libs } from '../libs';
+import { injector } from '../injector';
 
 export class SharedService {
   constructor() {
     this.jwt = jwt;
+    this.config = injector.get(Config);
+    this.libs = injector.get(Libs);
   }
 
   /**
@@ -41,7 +44,7 @@ export class SharedService {
    * @return {Promise<object>}
    */
   updateDocument(filter, update, options) {
-    const UserModel = config.get.mongoose.models.users;
+    const UserModel = this.config.get.mongoose.models.users;
     return new Promise(function(resolve, reject) {
       UserModel.updateOne(filter, update, options).then(
           (result) => {
@@ -62,7 +65,7 @@ export class SharedService {
    * @return {Promise}
    */
   sendMail(mailOptions) {
-    const transporter = libs.emailTransporter;
+    const transporter = this.libs.emailTransporter;
     return new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {

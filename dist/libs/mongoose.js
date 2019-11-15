@@ -3,9 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.mongoose = void 0;
+exports.Mongoose = void 0;
 
-var _config2 = require("../config");
+var _config = require("../config");
+
+var _injector = require("../injector");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -18,14 +20,16 @@ var Mongoose =
 function () {
   function Mongoose() {
     _classCallCheck(this, Mongoose);
+
+    this._config = _injector.injector.get(_config.Config);
   }
 
   _createClass(Mongoose, [{
     key: "config",
     value: function config() {
-      var _config$get = _config2.config.get,
-          mongoose = _config$get.mongoose,
-          Schema = _config$get.mongoose.Schema;
+      var _this$_config$get = this._config.get,
+          mongoose = _this$_config$get.mongoose,
+          Schema = _this$_config$get.mongoose.Schema;
       var UserSchema = new Schema({
         provider: {
           type: String,
@@ -44,7 +48,7 @@ function () {
         },
         avatar: {
           type: String,
-          "default": _config2.config.get.defaultAvatar
+          "default": this._config.get.defaultAvatar
         },
         name: {
           type: String,
@@ -151,12 +155,12 @@ function () {
   }, {
     key: "get",
     get: function get() {
-      return _config2.config.get.mongoose;
+      return this._config.get.mongoose;
     }
   }]);
 
   return Mongoose;
-}();
+}(); // export const mongoose = new Mongoose();
 
-var mongoose = new Mongoose();
-exports.mongoose = mongoose;
+
+exports.Mongoose = Mongoose;

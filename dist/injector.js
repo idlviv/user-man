@@ -5,9 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.injector = exports.Injector = void 0;
 
-var _singleton = require("./singleton");
+var _singleton = require("./helpers/singleton");
 
-var _errors = require("../errors");
+var _errors = require("./errors");
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -45,6 +45,12 @@ function (_Singleton) {
   /**
    * Returns instance of demanded class
    *
+   * helper - no dependecies
+   * libs - helpers, (not another libs)
+   * sharedService - libs, helpers,
+   * service - libs, helpers, sharedService
+   * controller - all
+   *
    * @param {Class | String} Injected // demanded class or it's token
    * @return {Object} // instance of demanded class
    * @memberof Injector
@@ -54,9 +60,10 @@ function (_Singleton) {
   _createClass(Injector, [{
     key: "get",
     value: function get(Injected) {
+      // console.log('Injected', Injected && Injected.name ? Injected.name : Injected);
       if (typeof Injected !== 'string' && !(Injected instanceof Function)) {
         throw new _errors.ServerError({
-          message: 'injected object error'
+          message: 'injected object type error: ' + _typeof(Injected)
         });
       } // if cointainer is not empty
 
@@ -102,12 +109,15 @@ function (_Singleton) {
       // then create new instance
 
 
-      console.log('New', Injected.name);
       var injectedClass = new Injected();
+      console.log('New', Injected.name);
       this.container.push({
         name: Injected.name,
         instance: injectedClass
-      });
+      }); // if (Injected.name === 'Config') {
+      //   console.log('Config inj', injectedClass);
+      // }
+
       return injectedClass;
     }
   }]);

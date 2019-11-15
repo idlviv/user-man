@@ -3,15 +3,15 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.libs = exports.Libs = void 0;
+exports.Libs = void 0;
 
 var _passport = require("./passport");
 
-var _config2 = require("../config");
+var _config = require("../config");
 
 var _mongoose = require("./mongoose");
 
-var _helpers = require("../helpers");
+var _injector = require("../injector");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -29,11 +29,11 @@ function () {
   function Libs() {
     _classCallCheck(this, Libs);
 
-    this._config = _helpers.injector.get(_config2.Config);
+    this._config = _injector.injector.get(_config.Config);
+    this._mongoose = _injector.injector.get(_mongoose.Mongoose);
+    this._passport = _injector.injector.get(_passport.Passport);
     this._nodemailer = nodemailer;
     this._cloudinary = cloudinary;
-    this._passport = _passport.passport;
-    this._mongoose = _mongoose.mongoose;
   }
 
   _createClass(Libs, [{
@@ -44,9 +44,9 @@ function () {
 
 
       this._cloudinary.config({
-        cloud_name: _config2.config.get.cloudinaryName,
-        api_key: _config2.config.get.cloudinaryKey,
-        api_secret: _config2.config.get.cloudinarySecret
+        cloud_name: this._config.get.cloudinaryName,
+        api_key: this._config.get.cloudinaryKey,
+        api_secret: this._config.get.cloudinarySecret
       });
 
       this._passport.config();
@@ -57,8 +57,8 @@ function () {
       return this._nodemailer.createTransport({
         service: 'Mailgun',
         auth: {
-          user: _config2.config.get.emailUser,
-          pass: _config2.config.get.emailPassword
+          user: this._config.get.emailUser,
+          pass: this._config.get.emailPassword
         }
       });
     }
@@ -80,8 +80,7 @@ function () {
   }]);
 
   return Libs;
-}();
+}(); // export const libs = new Libs();
+
 
 exports.Libs = Libs;
-var libs = new Libs();
-exports.libs = libs;

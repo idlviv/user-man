@@ -1,35 +1,30 @@
-// import { config } from '../config';
-// const { router } = config.get;
-import { userController } from './';
-import { sharedMiddleware } from '../shared';
-import { libs } from '../libs';
-// router.get('/user/logout',
-//     userController.logout(),
-//     userController.setFrontendAuthCookie(),
-//     userController.logoutResponse(),
-// );
-
-// export const userRouter = router;
+import { UserController } from '../../user';
+import { SharedMiddleware } from '..';
+import { Libs } from '../../libs';
+import { Passport } from '../../libs/passport';
+import { injector } from '../../injector';
 
 export class UserRouter {
   constructor(router) {
     this.router = router;
-    this.cloudinary = libs.cloudinary;
-    this.userController = userController;
-    this.sharedMiddleware = sharedMiddleware;
-    this.passport = libs.passport;
+    this.libs = injector.get(Libs);
+    this.passport = injector.get(Passport).get;
+    this.cloudinary = this.libs.cloudinary;
+    // this.passport = this.libs.passport;
+    this.userController = injector.get(UserController);
+    this.sharedMiddleware = injector.get(SharedMiddleware);
   }
 
   routes() {
     this.router.get('/user/login',
         this.passport.authenticate('local'),
-        this.userController.setFrontendAuthCookie(),
+        this.sharedMiddleware.setFrontendAuthCookie(),
         this.userController.login()
     );
 
     this.router.get('/user/logout',
         this.userController.logout(),
-        this.userController.setFrontendAuthCookie(),
+        this.sharedMiddleware.setFrontendAuthCookie(),
         this.userController.logoutResponse(),
     );
 
@@ -37,7 +32,7 @@ export class UserRouter {
         this.sharedMiddleware.recaptcha(),
         this.userController.create(),
         this.passport.authenticate('localWithoutPassword'),
-        this.userController.setFrontendAuthCookie(),
+        this.sharedMiddleware.setFrontendAuthCookie(),
         this.userController.login()
     );
 
@@ -67,7 +62,7 @@ export class UserRouter {
         // },
         
         // 5.step: set user cookie (for frontend manipulations)
-        this.userController.setFrontendAuthCookie(),
+        this.sharedMiddleware.setFrontendAuthCookie(),
 
         // 6.step: redirect to frontend
         function(req, res, next) {
@@ -116,7 +111,7 @@ export class UserRouter {
           next();
         },
         this.userController.emailVerificationReceive(),
-        // this.userController.setFrontendAuthCookie(),
+        // this.sharedMiddleware.setFrontendAuthCookie(),
         function(req, res, next) {
           res.redirect(req.protocol + '://' + req.get('host') + '/user/profile/');
         },
@@ -127,7 +122,7 @@ export class UserRouter {
     this.router.get('/user/password-reset-check-email',
         // logout if user already logged in
         this.userController.logout(),
-        this.userController.setFrontendAuthCookie(),
+        this.sharedMiddleware.setFrontendAuthCookie(),
         this.sharedMiddleware.recaptcha(),
         this.userController.passwordResetCheckEmail()
     );
@@ -144,7 +139,7 @@ export class UserRouter {
         this.passport.authenticate('jwt.passwordReset', { session: false }),
         this.userController.passwordReset(),
         this.passport.authenticate('localWithoutPassword', { session: true }),
-        this.userController.setFrontendAuthCookie(),
+        this.sharedMiddleware.setFrontendAuthCookie(),
         this.userController.login()
     );
 

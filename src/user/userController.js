@@ -1,20 +1,22 @@
-const bcrypt = require('bcryptjs');
-const Formidable = require('formidable');
-
+import * as bcrypt from 'bcryptjs';
+import * as Formidable from 'Formidable';
 import { ClientError, ServerError } from '../errors';
-import { Config, config } from '../config';
-import { userService } from './userService';
-import { libs } from '../libs';
-import { sharedService } from '../shared';
-import { injector } from '../helpers';
-
+import { Config } from '../config';
+import { UserService } from './userService';
+import { UserHelper } from './userHelper';
+import { Libs } from '../libs';
+import { SharedService } from '../shared';
+import { injector } from '../injector';
 
 export class UserController {
-
   constructor() {
-    this.userService = userService;
-    this.sharedService = sharedService;
+    this.userService = injector.get(UserService);
+    this.userHelper = injector.get(UserHelper);
+    this.sharedService = injector.get(SharedService);
     this.config = injector.get(Config);
+    this.libs = injector.get(Libs);
+    this.bcrypt = bcrypt;
+    this.Formidable = Formidable;
   }
 
   /*
@@ -22,13 +24,13 @@ export class UserController {
     invokes 'next()' to login created user
    */
   create() {
-    const UserModel = config.get.mongoose.models.users;
+    const UserModel = this.config.get.mongoose.models.users;
     return (req, res, next) => {
       const user = Object.assign({}, req.body);
       user.provider = 'local';
-      this.userService.isEmailUnique(user.email, user.provider)
-          .then(() => this.userService.isLoginUnique(user.login))
-          .then(() => bcrypt.hash(req.body.password, 10))
+      this.userHelper.isEmailUnique(user.email, user.provider)
+          .then(() => this.userHelper.isLoginUnique(user.login))
+          .then(() => this.bcrypt.hash(req.body.password, 10))
           .then((hash) => {
             user.password = hash;
             user.role = 'guest';
@@ -86,41 +88,41 @@ export class UserController {
     };
   }
 
-  /*
-    set cookie to frontend with users credential
-  */
-  setFrontendAuthCookie() {
-    const { JWTSecret, cookieName } = config.get;
-    return (req, res, next) => {
-      let token;
-      if (req.isAuthenticated()) {
-        const user = {
-          _id: req.user._doc._id,
-          login: req.user._doc.login,
-          name: req.user._doc.name,
-          surname: req.user._doc.surname,
-          avatar: req.user._doc.avatar,
-          provider: req.user._doc.provider,
-          role: req.user._doc.role,
-          commentsReadedTill: req.user._doc.commentsReadedTill,
-        };
-        token = this.sharedService.createJWT('', user, null, JWTSecret);
-      } else {
-        token = this.sharedService.createJWT('', null, null, JWTSecret);
-      }
-      res.cookie(
-          cookieName,
-          token,
-          {
-          // 'secure': false,
-            httpOnly: false,
-            // maxAge: null,
-            sameSite: 'Strict',
-          }
-      );
-      next();
-    };
-  }
+  // /*
+  //   set cookie to frontend with users credential
+  // */
+  // setFrontendAuthCookie() {
+  //   const { JWTSecret, cookieName } = config.get;
+  //   return (req, res, next) => {
+  //     let token;
+  //     if (req.isAuthenticated()) {
+  //       const user = {
+  //         _id: req.user._doc._id,
+  //         login: req.user._doc.login,
+  //         name: req.user._doc.name,
+  //         surname: req.user._doc.surname,
+  //         avatar: req.user._doc.avatar,
+  //         provider: req.user._doc.provider,
+  //         role: req.user._doc.role,
+  //         commentsReadedTill: req.user._doc.commentsReadedTill,
+  //       };
+  //       token = this.sharedService.createJWT('', user, null, JWTSecret);
+  //     } else {
+  //       token = this.sharedService.createJWT('', null, null, JWTSecret);
+  //     }
+  //     res.cookie(
+  //         cookieName,
+  //         token,
+  //         {
+  //         // 'secure': false,
+  //           httpOnly: false,
+  //           // maxAge: null,
+  //           sameSite: 'Strict',
+  //         }
+  //     );
+  //     next();
+  //   };
+  // }
 
   userEdit() {
     return (req, res, next) => {
@@ -130,10 +132,10 @@ export class UserController {
       Object.assign(user, req.user._doc);
       Object.assign(modificationRequest, req.body);
 
-      this.userService.isPasswordMatched(modificationRequest.password, user.password, user)
+      this.userHelper.isPasswordMatched(modificationRequest.password, user.password, user)
           .then((user) => {
             if (modificationRequest.name === 'password') {
-              return bcrypt.hash(modificationRequest.value, 10)
+              return this.bcrypt.hash(modificationRequest.value, 10)
                   .then((hash) => this.sharedService.updateDocument(
                       { _id: user._id },
                       {
@@ -193,8 +195,8 @@ export class UserController {
   }
 
   editAvatar() {
-    const { ObjectId } = config.get.mongoose.Types;
-    const cloudinary = libs.cloudinary;
+    const { ObjectId } = this.config.get.mongoose.Types;
+    const cloudinary = this.libs.cloudinary;
     return (req, res, next) => {
       const form = new Formidable.IncomingForm({ maxFileSize: 8400000 });
       const that = this;
@@ -202,8 +204,6 @@ export class UserController {
         if (err) {
           return next(new ServerError({ message: 'Помилка завантаження аватара - form parse', status: 400 }));
         }
-
-        console.log('files', files);
         const user = {};
         Object.assign(user, req.user._doc);
         cloudinary.v2.uploader.upload(
@@ -241,7 +241,7 @@ export class UserController {
   }
 
   emailVerificationSend() {
-    const mailOptions = config.get.mailOptionsEmailVerification;
+    const mailOptions = this.config.get.mailOptionsEmailVerification;
 
     return (req, res, next) => {
       const user = Object.assign({}, req.user._doc);
@@ -251,7 +251,7 @@ export class UserController {
       };
 
       const expire = 60 * 60;
-      const secret = config.get.JWTEmail;
+      const secret = this.config.get.JWTEmail;
       const token = this.sharedService.createJWT('', sub, expire, secret);
 
       const url = req.protocol + '://' + req.get('host') +
@@ -267,7 +267,7 @@ export class UserController {
   };
 
   emailVerificationReceive() {
-    const UserModel = config.get.mongoose.models.users;
+    const UserModel = this.config.get.mongoose.models.users;
 
     return (req, res, next) => {
       const user = Object.assign({}, req.user._doc);
@@ -316,16 +316,16 @@ export class UserController {
     Send reset code on email and write its hash in db
    */
   passwordResetCheckEmail() {
-    const mailOptions = config.get.mailOptionsResetPassword;
+    const mailOptions = this.config.get.mailOptionsResetPassword;
     return (req, res, next) => {
       let user;
       let code;
       const email = req.query.email;
-      this.userService.isEmailExists(email, 'local')
+      this.userHelper.isEmailExists(email, 'local')
           .then((userFromDb) => {
             code = Math.floor(Math.random() * (100000)) + '';
             user = userFromDb;
-            return bcrypt.hash(code, 10);
+            return this.bcrypt.hash(code, 10);
           })
           .then((hash) => this.sharedService.updateDocument({ _id: user._doc._id }, { $set: { code: hash, codeTries: 1 } }))
           .then((result) => {
@@ -337,7 +337,7 @@ export class UserController {
           .then((info) => {
             const sub = { _id: user._id };
             // token to identify user
-            const codeToken = this.sharedService.createJWT('JWT ', sub, 300, config.get.JWTSecretCode);
+            const codeToken = this.sharedService.createJWT('JWT ', sub, 300, this.config.get.JWTSecretCode);
             return res.status(200).json(codeToken);
           })
           .catch((err) => next(err));
@@ -349,7 +349,7 @@ export class UserController {
     Compare code from email with one in db
   */
   passwordResetCheckCode() {
-    const UserModel = config.get.mongoose.models.users;
+    const UserModel = this.config.get.mongoose.models.users;
     return (req, res, next) => {
       const code = req.query.code;
       let user;
@@ -363,12 +363,12 @@ export class UserController {
               throw new ClientError({ message: 'Кількість спроб вичерпано', status: 403, code: 'maxTries' });
             }
             // if code doesn't match then throw error with code 'wrongCredentials' here
-            return this.userService.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
+            return this.userHelper.isPasswordMatched(code, userFromDb._doc.code, userFromDb);
           })
           .then((userFromDb) => {
             const sub = { _id: userFromDb._doc._id };
             // token to identify user
-            const changePasswordToken = this.sharedService.createJWT('JWT ', sub, 300, config.get.JWTSecretChangePassword);
+            const changePasswordToken = this.sharedService.createJWT('JWT ', sub, 300, this.config.get.JWTSecretChangePassword);
             return res.status(200).json(changePasswordToken);
           })
           .catch((err) => {
@@ -391,7 +391,7 @@ export class UserController {
       const user = {};
       Object.assign(user, req.user._doc);
       const password = req.query.password;
-      bcrypt.hash(password, 10)
+      this.bcrypt.hash(password, 10)
           .then((hash) => this.sharedService.updateDocument(
               { _id: user._id },
               {

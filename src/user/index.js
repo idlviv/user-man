@@ -1,5 +1,5 @@
 import { UserController } from './userController';
-import { UserRouter } from './userRouter';
+import { UserService } from './userService';
+import { UserHelper } from './userHelper';
 
-export const userController = new UserController();
-export { UserRouter };
+export { UserController, UserService, UserHelper };

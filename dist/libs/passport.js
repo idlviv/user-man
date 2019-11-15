@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.passport = void 0;
+exports.Passport = void 0;
 
 var _passportGoogleOauth = require("passport-google-oauth");
 
@@ -13,9 +13,11 @@ var _passportJwt = require("passport-jwt");
 
 var _errors = require("../errors");
 
-var _userService = require("../user/userService");
+var _config = require("../config");
 
-var _config2 = require("../config");
+var _user = require("../user");
+
+var _injector = require("../injector");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -23,6 +25,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+// import { Mongoose } from './mongoose';
 var Passport =
 /*#__PURE__*/
 function () {
@@ -30,12 +33,16 @@ function () {
     _classCallCheck(this, Passport);
 
     this.passport = require('passport');
+    this.userHelper = _injector.injector.get(_user.UserHelper);
+    this._config = _injector.injector.get(_config.Config); // this.mongoose = injector.get(Mongoose);
   }
 
   _createClass(Passport, [{
     key: "config",
     value: function config() {
-      var UserModel = _config2.config.get.mongoose.models.users;
+      var _this = this;
+
+      var UserModel = this._config.get.mongoose.models.users;
       this.passport.serializeUser(function (user, done) {
         return done(null, user._id);
       });
@@ -57,17 +64,17 @@ function () {
         };
         var user;
 
-        _userService.userService.isLoginExists(userCandidate.login).then(function (userFromDb) {
+        _this.userHelper.isLoginExists(userCandidate.login).then(function (userFromDb) {
           user = userFromDb;
-          return _userService.userService.isPasswordLocked(userFromDb);
+          return _this.userHelper.isPasswordLocked(userFromDb);
         }) // if password doesn't match then throw error with code 'wrongCredentials' here
         .then(function (userFromDb) {
-          return _userService.userService.isPasswordMatched(userCandidate.password, userFromDb._doc.password, userFromDb);
+          return _this.userHelper.isPasswordMatched(userCandidate.password, userFromDb._doc.password, userFromDb);
         }).then(function (userFromDb) {
           return done(null, userFromDb);
         })["catch"](function (err) {
           if (err.code === 'wrongCredentials') {
-            _userService.userService.updatePasswordLockOptions(user).then(function () {
+            _this.userHelper.updatePasswordLockOptions(user).then(function () {
               return done(err, false);
             });
           } else {
@@ -80,18 +87,18 @@ function () {
       this.passport.use('localWithoutPassword', new _passportLocal.Strategy({
         usernameField: 'login'
       }, function (login, password, done) {
-        _userService.userService.isLoginExists(login).then(function (userFromDb) {
+        _this.userHelper.isLoginExists(login).then(function (userFromDb) {
           done(null, userFromDb);
         })["catch"](function (err) {
           return done(err, false);
         });
       })); // google sign in strategy
 
-      if (_config2.config.get.googleSignin) {
+      if (this._config.get.googleSignin) {
         this.passport.use(new _passportGoogleOauth.OAuth2Strategy({
-          clientID: _config2.config.get.googleClientID,
-          clientSecret: _config2.config.get.googleClientSecret,
-          callbackURL: _config2.config.get.googleCallbackURL + '/api/user/auth/google/redirect',
+          clientID: this._config.get.googleClientID,
+          clientSecret: this._config.get.googleClientSecret,
+          callbackURL: this._config.get.googleCallbackURL + '/api/user/auth/google/redirect',
           userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
         }, function (accessToken, refreshToken, profile, done) {
           // extract 'account' email
@@ -142,7 +149,7 @@ function () {
 
       var jwtOptions = {};
       jwtOptions.jwtFromRequest = _passportJwt.ExtractJwt.fromAuthHeaderWithScheme('jwt');
-      jwtOptions.secretOrKey = _config2.config.get.JWTSecret;
+      jwtOptions.secretOrKey = this._config.get.JWTSecret;
       this.passport.use('jwt', new _passportJwt.Strategy(jwtOptions, function (jwtPayload, done) {
         // на основі _id (витягнутого з токена) робить пошук
         // в базі, чи є такий юзер, і ф-я done повертає відповідь
@@ -160,7 +167,7 @@ function () {
       }));
       var emailVerificationOptions = {};
       emailVerificationOptions.jwtFromRequest = _passportJwt.ExtractJwt.fromUrlQueryParameter('token');
-      emailVerificationOptions.secretOrKey = _config2.config.get.JWTEmail; // pass req object to callback as first argument
+      emailVerificationOptions.secretOrKey = this._config.get.JWTEmail; // pass req object to callback as first argument
 
       emailVerificationOptions.passReqToCallback = true;
       this.passport.use('jwt.email.verification', new _passportJwt.Strategy(emailVerificationOptions, function (req, jwtPayload, done) {
@@ -183,7 +190,7 @@ function () {
       }));
       var jwtOptionsPasswordResetCheckCode = {};
       jwtOptionsPasswordResetCheckCode.jwtFromRequest = _passportJwt.ExtractJwt.fromAuthHeaderWithScheme('jwt');
-      jwtOptionsPasswordResetCheckCode.secretOrKey = _config2.config.get.JWTSecretCode; // extract _id from token to identify user, which resets password
+      jwtOptionsPasswordResetCheckCode.secretOrKey = this._config.get.JWTSecretCode; // extract _id from token to identify user, which resets password
 
       this.passport.use('jwt.passwordResetCheckCode', new _passportJwt.Strategy(jwtOptionsPasswordResetCheckCode, function (jwtPayload, done) {
         UserModel.findOne({
@@ -200,7 +207,7 @@ function () {
       }));
       var jwtOptionsPasswordReset = {};
       jwtOptionsPasswordReset.jwtFromRequest = _passportJwt.ExtractJwt.fromAuthHeaderWithScheme('jwt');
-      jwtOptionsPasswordReset.secretOrKey = _config2.config.get.JWTSecretChangePassword;
+      jwtOptionsPasswordReset.secretOrKey = this._config.get.JWTSecretChangePassword;
       this.passport.use('jwt.passwordReset', new _passportJwt.Strategy(jwtOptionsPasswordReset, function (jwtPayload, done) {
         UserModel.findOne({
           _id: jwtPayload.sub._id
@@ -223,7 +230,7 @@ function () {
   }]);
 
   return Passport;
-}();
+}(); // export const passport = new Passport();
 
-var passport = new Passport();
-exports.passport = passport;
+
+exports.Passport = Passport;
