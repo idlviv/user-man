@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcryptjs';
-import * as Formidable from 'Formidable';
+import * as Formidable from 'formidable';
 import { ClientError, ServerError } from '../../errors';
 import { Config } from '../../config';
 import { UserService } from './userService';
