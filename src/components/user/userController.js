@@ -1,12 +1,13 @@
 import * as bcrypt from 'bcryptjs';
 import * as Formidable from 'Formidable';
-import { ClientError, ServerError } from '../errors';
-import { Config } from '../config';
+import { ClientError, ServerError } from '../../errors';
+import { Config } from '../../config';
 import { UserService } from './userService';
 import { UserHelper } from './userHelper';
-import { Libs } from '../libs';
-import { SharedService } from '../shared';
-import { injector } from '../injector';
+import { Libs } from '../../libs';
+import { SharedService } from '../../shared';
+import { injector } from '../../injector';
+import { Mongoose } from '../../libs/mongoose';
 
 export class UserController {
   constructor() {
@@ -15,8 +16,10 @@ export class UserController {
     this.sharedService = injector.get(SharedService);
     this.config = injector.get(Config);
     this.libs = injector.get(Libs);
+    this.mongoose = injector.get(Mongoose);
     this.bcrypt = bcrypt;
     this.Formidable = Formidable;
+    this.UserModel = this.mongoose.get.models.users;
   }
 
   /*
@@ -24,7 +27,7 @@ export class UserController {
     invokes 'next()' to login created user
    */
   create() {
-    const UserModel = this.config.get.mongoose.models.users;
+    // const UserModel = this.mongoose.get.models.users;
     return (req, res, next) => {
       const user = Object.assign({}, req.body);
       user.provider = 'local';
@@ -36,7 +39,7 @@ export class UserController {
             user.role = 'guest';
             user.createdAt = Date.now();
             user.commentsReadedTill = Date.now();
-            const userModel = new UserModel(user);
+            const userModel = new this.UserModel(user);
             // create new user
             return userModel.save();
           })
@@ -195,7 +198,7 @@ export class UserController {
   }
 
   editAvatar() {
-    const { ObjectId } = this.config.get.mongoose.Types;
+    const { ObjectId } = this.mongoose.get.Types;
     const cloudinary = this.libs.cloudinary;
     return (req, res, next) => {
       const form = new Formidable.IncomingForm({ maxFileSize: 8400000 });
@@ -267,19 +270,19 @@ export class UserController {
   };
 
   emailVerificationReceive() {
-    const UserModel = this.config.get.mongoose.models.users;
+    // const UserModel = this.mongoose.get.models.users;
 
     return (req, res, next) => {
       const user = Object.assign({}, req.user._doc);
 
-      UserModel.findOne({ _id: user._id })
+      this.UserModel.findOne({ _id: user._id })
           .then((result) => {
             if (!result._id) {
               res.redirect(req.protocol + '://' + req.get('host'));
             } else if (result.email !== user.email) {
               res.redirect(req.protocol + '://' + req.get('host'));
             } else {
-              UserModel.updateOne({ _id: user._id },
+              this.UserModel.updateOne({ _id: user._id },
                   { $set: { 'role': 'user' } })
                   .then(
                       (result) => {
@@ -349,11 +352,11 @@ export class UserController {
     Compare code from email with one in db
   */
   passwordResetCheckCode() {
-    const UserModel = this.config.get.mongoose.models.users;
+    // const UserModel = this.mongoose.get.models.users;
     return (req, res, next) => {
       const code = req.query.code;
       let user;
-      UserModel.findOne({ _id: req.user._doc._id })
+      this.UserModel.findOne({ _id: req.user._doc._id })
           .then((userFromDb) => {
             user = userFromDb;
             if (!userFromDb) {

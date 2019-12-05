@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcryptjs';
-import { ClientError, DbError } from '../errors';
-import { Config } from '../config';
-import { injector } from '../injector';
+import { ClientError, DbError } from '../../errors';
+import { Config } from '../../config';
+import { injector } from '../../injector';
 
 export class UserHelper {
   constructor() {

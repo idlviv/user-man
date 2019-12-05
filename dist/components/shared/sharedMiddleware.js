@@ -5,19 +5,17 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.SharedMiddleware = void 0;
 
-var _requestPromiseNative = _interopRequireDefault(require("request-promise-native"));
+var _errors = require("../../errors");
 
-var _errors = require("../errors");
+var _config = require("../../config");
 
-var _config = require("../config");
+var _ = require("./");
 
-var _ = require(".");
+var _injector = require("../../injector");
 
-var _injector = require("../injector");
+var _passport = require("../../libs/passport");
 
-var _passport = require("../libs/passport");
-
-var _mongoose = require("../libs/mongoose");
+var _mongoose = require("../../libs/mongoose");
 
 var _expressSession = _interopRequireDefault(require("express-session"));
 
@@ -33,6 +31,8 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+var rp = require('request-promise-native');
+
 var MongoStore = require('connect-mongo')(_expressSession["default"]);
 
 var SharedMiddleware =
@@ -41,7 +41,7 @@ function () {
   function SharedMiddleware() {
     _classCallCheck(this, SharedMiddleware);
 
-    this.rp = _requestPromiseNative["default"];
+    // this.rp = rp;
     this.session = _expressSession["default"]; // console.log('session', this.session);
 
     this.cors = _cors["default"];
@@ -127,8 +127,7 @@ function () {
 
         var recaptchaSecret = _this.config.get.recaptchaSecret;
         var recaptchaURL = "https://www.google.com/recaptcha/api/siteverify?secret=\n          ".concat(recaptchaSecret, "&response=").concat(recaptcha, "&\n          remoteip=").concat(req.connection.remoteAddress);
-
-        _this.rp(recaptchaURL).then(function (result) {
+        rp(recaptchaURL).then(function (result) {
           result = JSON.parse(result);
 
           if (result.success === true) {

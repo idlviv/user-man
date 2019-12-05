@@ -30,6 +30,7 @@ function () {
       var _this$_config$get = this._config.get,
           mongoose = _this$_config$get.mongoose,
           Schema = _this$_config$get.mongoose.Schema;
+      var ObjectId = mongoose.Types.ObjectId;
       var UserSchema = new Schema({
         provider: {
           type: String,
@@ -149,8 +150,134 @@ function () {
         ChatActiveUserSchema.updatedAt = Date.now();
         next();
       });
+      var CatalogSchema = new Schema({
+        _id: {
+          type: String,
+          require: true
+        },
+        name: {
+          type: String,
+          required: true
+        },
+        ancestors: {
+          type: [String],
+          required: true
+        },
+        parent: {
+          type: String,
+          require: true
+        },
+        description: {
+          type: String
+        },
+        menuImage: {
+          type: [String],
+          "default": this._config.get.defaultProductImg
+        },
+        prefix: {
+          type: String
+        }
+      });
+      var CommentSchema = new Schema({
+        comment: {
+          type: String
+        },
+        commentator: {
+          type: ObjectId
+        },
+        commentedAt: {
+          type: Number,
+          "default": 0
+        },
+        display: {
+          type: Boolean,
+          "default": false
+        }
+      });
+      var ProductSchema = new Schema({
+        _id: {
+          type: String,
+          required: true
+        },
+        name: {
+          type: String,
+          required: true
+        },
+        description: {
+          type: String,
+          required: true
+        },
+        parents: {
+          type: [String],
+          required: true
+        },
+        display: {
+          type: Boolean,
+          required: true,
+          "default": true
+        },
+        onMainPage: {
+          type: Boolean,
+          required: true,
+          "default": false
+        },
+        mainImage: {
+          type: String,
+          required: true
+        },
+        menuImage: {
+          type: String,
+          required: true
+        },
+        assets: {
+          type: [String]
+        },
+        price: {
+          type: Number
+        },
+        discount: {
+          type: Number
+        },
+        dimensions: {
+          width: {
+            type: Number
+          },
+          height: {
+            type: Number
+          }
+        },
+        createdAt: {
+          type: Number,
+          "default": 0
+        },
+        updatedAt: {
+          type: Number,
+          "default": 0
+        },
+        likes: {
+          type: Number,
+          "default": 0
+        },
+        likedBy: {
+          type: [String]
+        },
+        dislikes: {
+          type: Number,
+          "default": 0
+        },
+        dislikedBy: {
+          type: [String]
+        },
+        views: {
+          type: Number,
+          "default": 0
+        },
+        comments: [CommentSchema]
+      }); // mongoose.model('catalogs', CatalogSchema);
+
       mongoose.model('chatActiveUsers', ChatActiveUserSchema);
-      mongoose.model('users', UserSchema);
+      mongoose.model('users', UserSchema); // mongoose.model('comments', CommentSchema);
+      // mongoose.model('products', ProductSchema);
     }
   }, {
     key: "get",
@@ -160,7 +287,6 @@ function () {
   }]);
 
   return Mongoose;
-}(); // export const mongoose = new Mongoose();
-
+}();
 
 exports.Mongoose = Mongoose;

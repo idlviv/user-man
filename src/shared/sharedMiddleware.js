@@ -1,17 +1,29 @@
-import * as rp from 'request-promise-native';
-// const rp = require('request-promise-native');
+import rp from 'request-promise-native';
+
 import { ClientError } from '../errors';
 import { Config } from '../config';
-import { SharedService } from './';
+import { SharedService } from '.';
 import { injector } from '../injector';
 import { Passport } from '../libs/passport';
+import { Mongoose } from '../libs/mongoose';
+
+import session from 'express-session';
+const MongoStore = require('connect-mongo')(session);
+import cors from 'cors';
+import csrf from 'csurf';
 
 export class SharedMiddleware {
   constructor() {
     this.rp = rp;
+    this.session = session;
+    // console.log('session', this.session);
+
+    this.cors = cors;
+    this.csrf = csrf;
     this.sharedService = injector.get(SharedService);
     this.config = injector.get(Config);
     this.passport = injector.get(Passport).get;
+    this.mongoose = injector.get(Mongoose);
   }
 
   /**
@@ -22,17 +34,46 @@ export class SharedMiddleware {
    */
   userManInit() {
     return [
+      this.sessionCookie(),
       this.passport.initialize(),
       this.passport.session(),
-      // // set custom cookie for angular XSRF-TOKEN
-      this.setCSRFCookie(),
-      // // set frontend authentication cookie
-      this.setFrontendAuthCookie(),
+      // this.setCors(),
+      this.csrf({ cookie: true }), // check cookie, add req.csrfToken(),
+      this.setCSRFCookie(), // set custom cookie name (XSRF-TOKEN) for angular
+      this.setFrontendAuthCookie(), // set frontend authentication cookie
       // (req, res, next) => {
       //   console.log('init');
       //   next();
       // },
     ];
+  }
+
+  setCors() {
+    const corsOptions = {
+      origin: 'https://use.fontawesome.com',
+      optionsSuccessStatus: 200,
+      // some legacy browsers (IE11, various SmartTVs) choke on 204
+    };
+    return this.cors(corsOptions);
+  }
+
+  sessionCookie() {
+    const sessionStore = new MongoStore({ mongooseConnection: this.mongoose.get.connection });
+    const { sessionCookieKey, sessionCookieSecret } = this.config.get;
+    return this.session({
+      key: sessionCookieKey,
+      secret: sessionCookieSecret,
+      resave: true,
+      saveUninitialized: true,
+      cookie: {
+        path: '/',
+        httpOnly: true, // not reachable for js (XSS)
+        // secure: config.get('NODE_ENV') === 'production',
+        sameSite: 'Lax',
+        // maxAge: null, // never expires, but will be deleted after closing browser
+      },
+      store: sessionStore,
+    });
   }
 
   recaptcha() {
@@ -149,7 +190,7 @@ export class SharedMiddleware {
  */
   setFrontendAuthCookie() {
     return (req, res, next) => {
-      const { JWTSecret, cookieName } = this.config.get;
+      const { JWTSecret, frontendCookieName } = this.config.get;
 
       let token;
       if (req.isAuthenticated()) {
@@ -168,7 +209,7 @@ export class SharedMiddleware {
         token = this.sharedService.createJWT('', null, null, JWTSecret);
       }
       res.cookie(
-          cookieName,
+          frontendCookieName,
           token,
           {
           // 'secure': false,

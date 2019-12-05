@@ -59,6 +59,10 @@ function (_Error) {
   return ServerError;
 }(_wrapNativeSuper(Error)); //    messages
 // bc (Bestcrypt errors) - 500 Internal Server Error
+// Angular
+// (err: HttpErrorResponse) => {
+//   console.log('err', err.error.message);
+// });
 
 
 exports.ServerError = ServerError;

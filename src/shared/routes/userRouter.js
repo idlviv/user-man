@@ -1,16 +1,14 @@
-import { UserController } from '../../user';
+import { UserController } from '../../components/user';
 import { SharedMiddleware } from '..';
-import { Libs } from '../../libs';
+// import { Libs } from '../../libs';
 import { Passport } from '../../libs/passport';
 import { injector } from '../../injector';
 
 export class UserRouter {
   constructor(router) {
     this.router = router;
-    this.libs = injector.get(Libs);
+    // this.libs = injector.get(Libs);
     this.passport = injector.get(Passport).get;
-    this.cloudinary = this.libs.cloudinary;
-    // this.passport = this.libs.passport;
     this.userController = injector.get(UserController);
     this.sharedMiddleware = injector.get(SharedMiddleware);
   }

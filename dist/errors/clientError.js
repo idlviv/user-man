@@ -49,6 +49,7 @@ function (_Error) {
     _classCallCheck(this, ClientError);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(ClientError).call(this));
+    console.log('error ', err);
     _this.message = err && err.message ? 'Client error, ' + err.message : 'Bad request';
     _this.status = err && err.status ? err.status : 400;
     _this.code = err && err.code ? err.code : 0;
@@ -65,6 +66,10 @@ function (_Error) {
 // recaptchaErr () => clientError - 403 Forbidden
 // bc (Bestcrypt errors)
 // notAuthorized (don't have permission) => clientError - 401 Unauthorized
+// Angular
+// (err: HttpErrorResponse) => {
+//   console.log('err', err.error.message);
+// });
 
 
 exports.ClientError = ClientError;

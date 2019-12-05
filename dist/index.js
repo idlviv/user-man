@@ -21,6 +21,18 @@ Object.defineProperty(exports, "UserRouter", {
     return _shared.UserRouter;
   }
 });
+Object.defineProperty(exports, "CatalogRouter", {
+  enumerable: true,
+  get: function get() {
+    return _shared.CatalogRouter;
+  }
+});
+Object.defineProperty(exports, "DbRouter", {
+  enumerable: true,
+  get: function get() {
+    return _shared.DbRouter;
+  }
+});
 exports.helpers = exports.errors = exports.sharedService = exports.sharedMiddleware = exports.libs = void 0;
 
 var _config = require("./config");

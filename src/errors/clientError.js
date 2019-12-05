@@ -12,6 +12,7 @@
 export class ClientError extends Error {
   constructor(err) {
     super();
+    console.log('error ', err);
     this.message = err && err.message ? 'Client error, ' + err.message : 'Bad request';
     this.status = err && err.status ? err.status : 400;
     this.code = err && err.code ? err.code : 0;
@@ -27,4 +28,9 @@ export class ClientError extends Error {
 // recaptchaErr () => clientError - 403 Forbidden
 // bc (Bestcrypt errors)
 // notAuthorized (don't have permission) => clientError - 401 Unauthorized
+
+// Angular
+// (err: HttpErrorResponse) => {
+//   console.log('err', err.error.message);
+// });
 

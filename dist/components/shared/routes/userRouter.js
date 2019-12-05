@@ -5,9 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.UserRouter = void 0;
 
-var _user = require("../../components/user");
+var _user = require("../../user");
 
 var _ = require("..");
+
+var _libs = require("../../libs");
 
 var _passport = require("../../libs/passport");
 
@@ -25,9 +27,11 @@ function () {
   function UserRouter(router) {
     _classCallCheck(this, UserRouter);
 
-    this.router = router; // this.libs = injector.get(Libs);
-
+    this.router = router;
+    this.libs = _injector.injector.get(_libs.Libs);
     this.passport = _injector.injector.get(_passport.Passport).get;
+    this.cloudinary = this.libs.cloudinary; // this.passport = this.libs.passport;
+
     this.userController = _injector.injector.get(_user.UserController);
     this.sharedMiddleware = _injector.injector.get(_.SharedMiddleware);
   }

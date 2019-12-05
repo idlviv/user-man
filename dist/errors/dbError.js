@@ -50,13 +50,17 @@ function (_Error) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(DbError).call(this));
     _this.message = err && err.message ? 'DatabaseError, ' + err.message : 'DatabaseError';
-    _this.status = err && err.status ? err.status : 500;
+    _this.status = err && err.status ? err.status : 400;
     _this.code = err && err.code ? err.code : 0;
     _this.name = 'DatabaseError';
     return _this;
   }
 
   return DbError;
-}(_wrapNativeSuper(Error));
+}(_wrapNativeSuper(Error)); // Angular
+// (err: HttpErrorResponse) => {
+//   console.log('err', err.error.message);
+// });
+
 
 exports.DbError = DbError;

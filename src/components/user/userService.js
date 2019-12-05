@@ -1,7 +1,7 @@
-import { DbError } from '../errors';
-import { Config } from '../config';
-import { SharedService } from '../shared';
-import { injector } from '../injector';
+import { DbError } from '../../errors';
+import { Config } from '../../config';
+import { SharedService } from '../../shared';
+import { injector } from '../../injector';
 
 export class UserService {
   constructor() {

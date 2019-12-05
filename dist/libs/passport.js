@@ -25,14 +25,15 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-// import { Mongoose } from './mongoose';
+var passport = require('passport');
+
 var Passport =
 /*#__PURE__*/
 function () {
   function Passport() {
     _classCallCheck(this, Passport);
 
-    this.passport = require('passport');
+    this.passport = passport;
     this.userHelper = _injector.injector.get(_user.UserHelper);
     this._config = _injector.injector.get(_config.Config); // this.mongoose = injector.get(Mongoose);
   }

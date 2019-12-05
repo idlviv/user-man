@@ -1,6 +1,6 @@
 const { ClientError, ServerError, DbError } = require('./dist').errors;
 const { libs, sharedMiddleware, sharedService} = require('./dist');
-const { Config, UserRouter, Libs } = require('./dist');
+const { Config, UserRouter, CatalogRouter, DbRouter, Libs } = require('./dist');
 
 
 module.exports = {
@@ -12,5 +12,5 @@ module.exports = {
   Libs,
   Config,
   ClientError, ServerError, DbError,
-  UserRouter,
+  UserRouter, CatalogRouter, DbRouter,
 };

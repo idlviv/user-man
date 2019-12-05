@@ -12,7 +12,7 @@ export class Mongoose {
 
   config() {
     const { mongoose, mongoose: { Schema } } = this._config.get;
-
+    const ObjectId = mongoose.Types.ObjectId;
     const UserSchema = new Schema({
       provider: {
         type: String,
@@ -139,9 +139,137 @@ export class Mongoose {
       next();
     });
 
+    const CatalogSchema = new Schema({
+      _id: {
+        type: String,
+        require: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      ancestors: {
+        type: [String],
+        required: true,
+      },
+      parent: {
+        type: String,
+        require: true,
+      },
+      description: {
+        type: String,
+      },
+      menuImage: {
+        type: [String],
+        default: this._config.get.defaultProductImg,
+      },
+      prefix: {
+        type: String,
+      },
+    });
+
+    const CommentSchema = new Schema({
+      comment: {
+        type: String,
+      },
+      commentator: {
+        type: ObjectId,
+      },
+      commentedAt: {
+        type: Number,
+        default: 0,
+      },
+      display: {
+        type: Boolean,
+        default: false,
+      },
+    });
+
+    const ProductSchema = new Schema({
+      _id: {
+        type: String,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      description: {
+        type: String,
+        required: true,
+      },
+      parents: {
+        type: [String],
+        required: true,
+      },
+      display: {
+        type: Boolean,
+        required: true,
+        default: true,
+      },
+      onMainPage: {
+        type: Boolean,
+        required: true,
+        default: false,
+      },
+      mainImage: {
+        type: String,
+        required: true,
+      },
+      menuImage: {
+        type: String,
+        required: true,
+      },
+      assets: {
+        type: [String],
+      },
+      price: {
+        type: Number,
+      },
+      discount: {
+        type: Number,
+      },
+      dimensions: {
+        width: {
+          type: Number,
+        },
+        height: {
+          type: Number,
+        },
+      },
+      createdAt: {
+        type: Number,
+        default: 0,
+      },
+      updatedAt: {
+        type: Number,
+        default: 0,
+      },
+      likes: {
+        type: Number,
+        default: 0,
+      },
+      likedBy: {
+        type: [String],
+      },
+      dislikes: {
+        type: Number,
+        default: 0,
+      },
+      dislikedBy: {
+        type: [String],
+      },
+      views: {
+        type: Number,
+        default: 0,
+      },
+      comments: [CommentSchema],
+    });
+
+    // mongoose.model('catalogs', CatalogSchema);
     mongoose.model('chatActiveUsers', ChatActiveUserSchema);
     mongoose.model('users', UserSchema);
+    // mongoose.model('comments', CommentSchema);
+    // mongoose.model('products', ProductSchema);
   }
 }
-
-// export const mongoose = new Mongoose();

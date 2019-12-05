@@ -7,11 +7,11 @@ import { DatabaseError } from '../errors';
 import { Config } from '../config';
 import { UserHelper } from '../user';
 import { injector } from '../injector';
-// import { Mongoose } from './mongoose';
+const passport = require('passport');
 
 export class Passport {
   constructor() {
-    this.passport = require('passport');
+    this.passport = passport;
     this.userHelper = injector.get(UserHelper);
     this._config = injector.get(Config);
     // this.mongoose = injector.get(Mongoose);
